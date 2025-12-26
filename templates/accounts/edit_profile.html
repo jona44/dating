@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="page-content">
+<div class="max-w-4xl mx-auto py-8 px-4" x-data="{ section: 'basic' }">
+  <div class="bg-white rounded-2xl shadow-lg flex flex-col md:flex-row overflow-hidden">
+    
+    <!-- Sidebar Tabs -->
+    <div class="w-full md:w-64 bg-gray-50 p-6 border-r">
+      <h2 class="font-bold text-gray-500 uppercase text-xs tracking-wider mb-6">Profile Settings</h2>
+      <nav class="space-y-2">
+        <button @click="section = 'basic'" :class="section === 'basic' ? 'bg-pink-100 text-pink-700' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-4 py-2 rounded-xl transition font-medium">
+          ✨ Basic Info
+        </button>
+        <button @click="section = 'personal'" :class="section === 'personal' ? 'bg-pink-100 text-pink-700' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-4 py-2 rounded-xl transition font-medium">
+          👤 Personal Details
+        </button>
+        <button @click="section = 'lifestyle'" :class="section === 'lifestyle' ? 'bg-pink-100 text-pink-700' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-4 py-2 rounded-xl transition font-medium">
+          🥂 Lifestyle
+        </button>
+        <button @click="section = 'health'" :class="section === 'health' ? 'bg-pink-100 text-pink-700' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-4 py-2 rounded-xl transition font-medium">
+          🤝 Health Journey
+        </button>
+        <button @click="section = 'preferences'" :class="section === 'preferences' ? 'bg-pink-100 text-pink-700' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-4 py-2 rounded-xl transition font-medium">
+          🔥 Match Preferences
+        </button>
+      </nav>
+      
+      <div class="mt-12 pt-6 border-t text-center">
+        <div class="relative w-24 h-24 mx-auto rounded-full bg-gray-200 overflow-hidden mb-3">
+          {% if profile.profile_picture %}
+            <img src="{{ profile.profile_picture.url }}" class="w-full h-full object-cover">
+          {% else %}
+            <span class="text-4xl flex items-center justify-center h-full">👤</span>
+          {% endif %}
+        </div>
+        <p class="font-bold">{{ profile.display_name }}</p>
+        <p class="text-xs text-gray-500">{{ profile.profile_completeness }}% Complete</p>
+      </div>
+    </div>
+
+    <!-- Main Form Area -->
+    <div class="flex-1 p-8">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Basic Section -->
+        <div x-show="section === 'basic'" class="space-y-6 animate-fade-in">
+          <h3 class="text-2xl font-bold mb-6">Basic Information</h3>
+          
+          <div class="flex items-center gap-6 mb-8">
+             <div id="image-preview" class="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+                {% if profile.profile_picture %}
+                    <img src="{{ profile.profile_picture.url }}" class="w-full h-full object-cover">
+                {% else %}
+                    <span class="text-3xl text-gray-400">📷</span>
+                {% endif %}
+             </div>
+             <div>
+                <label for="id_profile_picture" class="cursor-pointer bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 transition">
+                    Change Main Photo
+                </label>
+                {{ form.profile_picture }}
+                <p class="text-xs text-gray-500 mt-2">Recommended: Square image, max 2MB</p>
+             </div>
+          </div>
+
+          <!-- Additional Photos -->
+          <div class="mb-8">
+            <h4 class="font-bold text-gray-700 mb-3">Additional Photos</h4>
+            
+            <div class="flex flex-wrap gap-4 mb-4">
+                {% for photo in profile.photos.all %}
+                    <div id="photo-{{ photo.id }}" class="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 group">
+                        <img src="{{ photo.image.url }}" class="w-full h-full object-cover">
+                        <button type="button" 
+                                hx-delete="{% url 'delete_photo' photo.id %}"
+                                hx-target="#photo-{{ photo.id }}"
+                                hx-swap="outerHTML"
+                                hx-confirm="Are you sure you want to remove this photo?"
+                                class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition shadow hover:bg-red-700">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                {% empty %}
+                    <p class="text-sm text-gray-400 italic">No additional photos uploaded.</p>
+                {% endfor %}
+            </div>
+
+            <div class="relative">
+                <input type="file" name="additional_photos" id="id_additional_photos" multiple accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 transition"/>
+                <p class="text-xs text-gray-500 mt-1">Upload unlimited photos to show your life.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.display_name.label }}</label>
+                {{ form.display_name }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.birth_date.label }}</label>
+                {{ form.birth_date }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.gender.label }}</label>
+                {{ form.gender }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.city.label }}</label>
+                {{ form.city }}
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-gray-700">{{ form.bio.label }}</label>
+            {{ form.bio }}
+          </div>
+        </div>
+
+        <!-- Personal Section -->
+        <div x-show="section === 'personal'" class="space-y-6 animate-fade-in" x-data="{ children_status: '{{ form.children_status.value|default:'' }}' }">
+          <h3 class="text-2xl font-bold mb-6">Personal Details</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.nationality.label }}</label>
+                {{ form.nationality }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.ethnicity.label }}</label>
+                {{ form.ethnicity }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.education_level.label }}</label>
+                {{ form.education_level }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.employment_status.label }}</label>
+                {{ form.employment_status }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.children_status.label }}</label>
+                {{ form.children_status }}
+            </div>
+            <div class="space-y-2" x-show="children_status === 'have_children'" x-cloak>
+                <label class="block text-sm font-semibold text-gray-700">{{ form.children_count.label }}</label>
+                {{ form.children_count }}
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-gray-700">{{ form.hobbies.label }}</label>
+            {{ form.hobbies }}
+            <p class="text-xs text-gray-500">Separated by commas</p>
+          </div>
+        </div>
+
+        <!-- Lifestyle Section -->
+        <div x-show="section === 'lifestyle'" class="space-y-6 animate-fade-in">
+          <h3 class="text-2xl font-bold mb-6">Lifestyle</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.height.label }} (cm)</label>
+                {{ form.height }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.smoking.label }}</label>
+                {{ form.smoking }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.drinking.label }}</label>
+                {{ form.drinking }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Health Section -->
+        <div x-show="section === 'health'" class="space-y-6 animate-fade-in">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-2xl font-bold">Health Journey</h3>
+            <span class="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-bold uppercase">Private & Optional</span>
+          </div>
+          
+          <div class="bg-blue-50 p-4 rounded-xl mb-6">
+            <p class="text-sm text-blue-800">
+              This information is only used to help match you with people who have similar experiences. It is never shown to others without your context.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.diagnosis_year.label }}</label>
+                {{ form.diagnosis_year }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.treatment_status.label }}</label>
+                {{ form.treatment_status }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ form.disclosure_comfort.label }}</label>
+                {{ form.disclosure_comfort }}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 bg-gray-50 p-4 rounded-xl">
+            {{ form.support_seeking }}
+            <label class="text-sm font-semibold text-gray-700 cursor-pointer" for="{{ form.support_seeking.id_for_label }}">
+                Looking for community support?
+            </label>
+          </div>
+        </div>
+
+        <!-- Match Preferences Section -->
+        <div x-show="section === 'preferences'" class="space-y-6 animate-fade-in">
+          <h3 class="text-2xl font-bold mb-6">Match Preferences</h3>
+          <p class="text-gray-500 text-sm">Tell us who you're looking for to help us find better matches for you.</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ pref_form.min_age.label }}</label>
+                {{ pref_form.min_age }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ pref_form.max_age.label }}</label>
+                {{ pref_form.max_age }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ pref_form.interested_in.label }}</label>
+                {{ pref_form.interested_in }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ pref_form.pref_city.label }}</label>
+                {{ pref_form.pref_city }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ pref_form.pref_max_children.label }}</label>
+                {{ pref_form.pref_max_children }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ pref_form.pref_ethnicity.label }}</label>
+                {{ pref_form.pref_ethnicity }}
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">{{ pref_form.pref_nationality.label }}</label>
+                {{ pref_form.pref_nationality }}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 bg-gray-50 p-4 rounded-xl">
+            {{ pref_form.show_me }}
+            <label class="text-sm font-semibold text-gray-700 cursor-pointer" for="{{ pref_form.show_me.id_for_label }}">
+                Show my profile to others in discovery
+            </label>
+          </div>
+        </div>
+
+        <div class="mt-12 pt-8 border-t flex flex-col sm:flex-row gap-4">
+          <button type="submit" class="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-pink-700 hover:to-purple-700 shadow-lg transition transform hover:-translate-y-0.5">
+            Update Profile
+          </button>
+          <button hx-get="{% url 'discovery_feed' %}"
+                  hx-target="main"
+                  hx-swap="innerHTML"
+                  hx-select="#page-content"
+                  hx-push-url="true"
+                  class="flex-1 py-4 text-center text-gray-600 font-semibold hover:bg-gray-100 rounded-xl transition cursor-pointer">
+            Discovery Feed
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</div>
+
+<style>
+    /* Manual override for hidden file input but still accessible via label */
+    input[name="profile_picture"] {
+        display: none;
+    }
+</style>
+
+<script>
+    // Photo preview
+    document.querySelector('input[name="profile_picture"]').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('image-preview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+</script>
+{% endblock %}

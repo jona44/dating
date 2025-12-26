@@ -1,0 +1,172 @@
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render, get_object_or_404, HttpResponse
+from .forms import (
+    ProfileForm, SignupForm, OnboardingStep1Form, 
+    OnboardingStep2Form, OnboardingStep3Form, OnboardingStep4Form
+)
+from discovery.forms import PreferenceForm
+from discovery.models import Preference
+from .models import Profile, ProfilePhoto
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+
+
+@login_required
+def home(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    if not profile.is_complete:
+        step = max(1, profile.onboarding_step)
+        return redirect("onboarding_step", step=step)
+    return redirect("discovery_feed")
+
+
+@login_required
+def welcome_view(request):
+    """Welcome page after signup"""
+    return render(request, "accounts/welcome.html")
+
+
+@login_required
+def onboarding_step_view(request, step):
+    """Handle multi-step onboarding"""
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    
+    # Define forms for each step
+    forms_map = {
+        1: OnboardingStep1Form,
+        2: OnboardingStep2Form,
+        3: OnboardingStep3Form,  # HIV Journey - Optional
+        4: OnboardingStep4Form,
+    }
+    
+    # Validate step number
+    if step not in forms_map:
+        return redirect('onboarding_step', step=1)
+    
+    FormClass = forms_map[step]
+    
+    if request.method == 'POST':
+        form = FormClass(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            profile = form.save(commit=False)
+            profile.onboarding_step = step
+            profile.profile_completeness = profile.calculate_completeness()
+            
+            # Mark complete on final step
+            if step == 4:
+                profile.is_complete = True
+                
+            profile.save()
+            
+            # Handle additional photos for Step 4
+            if step == 4:
+                files = request.FILES.getlist('additional_photos')
+                for f in files:
+                    ProfilePhoto.objects.create(profile=profile, image=f)
+            
+            # Navigate to next step or complete
+            if step < 4:
+                return redirect('onboarding_step', step=step+1)
+            else:
+                messages.success(request, 'Welcome! Your profile is complete.')
+                return redirect('discovery_feed')
+    else:
+        form = FormClass(instance=profile)
+    
+    return render(request, f'accounts/onboarding/step{step}.html', {
+        'form': form,
+        'step': step,
+        'total_steps': 4,
+        'progress': int((step / 4) * 100)
+    })
+
+
+
+
+@login_required
+def edit_profile(request):
+    """Allow users to edit their profile and match preferences"""
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    preferences, _ = Preference.objects.get_or_create(profile=profile)
+
+    if request.method == "POST":
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        pref_form = PreferenceForm(request.POST, instance=preferences)
+        
+        if form.is_valid() and pref_form.is_valid():
+            prof = form.save(commit=False)
+            prof.user = request.user
+            prof.profile_completeness = prof.calculate_completeness()
+            prof.save()
+            pref_form.save()
+            
+            # Handle additional photos
+            files = request.FILES.getlist('additional_photos')
+            for f in files:
+                ProfilePhoto.objects.create(profile=profile, image=f)
+            
+            messages.success(request, "Profile and preferences updated successfully!")
+            return redirect("discovery_feed")
+    else:
+        form = ProfileForm(instance=profile)
+        pref_form = PreferenceForm(instance=preferences)
+
+    return render(request, "accounts/edit_profile.html", {
+        "form": form,
+        "pref_form": pref_form,
+        "profile": profile
+    })
+
+
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect("home")
+
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=email, password=password)
+
+        if user:
+            login(request, user)
+            return redirect("home")
+        else:
+            messages.error(request, "Invalid email or password")
+
+    return render(request, "accounts/login.html")
+
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("login")
+
+
+
+
+def signup_view(request):
+    if request.user.is_authenticated:
+        return redirect("home")
+
+    if request.method == "POST":
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("welcome")
+    else:
+        form = SignupForm()
+
+    return render(request, "accounts/signup.html", {"form": form})
+
+
+@login_required
+def delete_photo_view(request, photo_id):
+    """Delete a profile photo"""
+    if request.method == "DELETE":
+        photo = get_object_or_404(ProfilePhoto, id=photo_id, profile__user=request.user)
+        photo.delete()
+        return HttpResponse("")
+    return HttpResponse(status=405)

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .btn { display: inline-block; padding: 12px 24px; background: linear-gradient(to right, #db2777, #9333ea); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        .footer { margin-top: 30px; font-size: 12px; color: #999; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="color: #db2777;">It's a Match! ❤️</h1>
+        </div>
+        
+        <p>Hi there,</p>
+        
+        <p>Great news! You and <strong>{{ other.display_name }}</strong> just matched on {{ site_name }}.</p>
+        
+        <p>They are interested in getting to know you. Why not send the first message and say hi?</p>
+        
+        <div style="text-align: center; margin: 40px 0;">
+            <a href="{{ site_url }}/inbox/" class="btn">View My Matches</a>
+        </div>
+        
+        <p>Happy dating,<br>The {{ site_name }} Team</p>
+        
+        <div class="footer">
+            <p>You received this because you have an account on {{ site_name }}.</p>
+            <p><a href="{{ site_url }}/settings/">Manage email notifications</a></p>
+        </div>
+    </div>
+</body>
+</html>

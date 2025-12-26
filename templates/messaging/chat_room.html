@@ -1,0 +1,24 @@
+<script>
+const roomId = "{{ room.id }}";
+const socket = new WebSocket(
+    "ws://" + window.location.host + "/ws/chat/" + roomId + "/"
+);
+
+socket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+
+    if (data.type === "typing") {
+        console.log("User typing:", data.user);
+    }
+
+    if (data.type === "status") {
+        console.log("User", data.user, data.status);
+    }
+};
+
+document.getElementById("message-input").addEventListener("input", () => {
+    socket.send(JSON.stringify({
+        type: "typing"
+    }));
+});
+</script>

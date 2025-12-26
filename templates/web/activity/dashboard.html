@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Activity - Dating App{% endblock %}
+
+{% block content %}
+<div id="page-content" class="max-w-4xl mx-auto animate-fade-in">
+    <!-- Header Stats -->
+    <div class="bg-gradient-to-r from-pink-600 to-purple-700 rounded-3xl p-8 mb-8 text-white shadow-xl relative overflow-hidden">
+        <div class="relative z-10">
+            <h1 class="text-3xl font-bold mb-2">My Activity</h1>
+            <p class="opacity-90">Keep track of who's interested in you</p>
+            
+            <div class="mt-8 flex gap-8">
+                <div class="bg-white/20 backdrop-blur-md rounded-2xl p-4 min-w-[120px]">
+                    <span class="block text-3xl font-bold">{{ likers.count }}</span>
+                    <span class="text-sm opacity-80 uppercase tracking-wider font-semibold">New Likers</span>
+                </div>
+                <div class="bg-white/20 backdrop-blur-md rounded-2xl p-4 min-w-[120px]">
+                    <span class="block text-3xl font-bold">{{ total_views }}</span>
+                    <span class="text-sm opacity-80 uppercase tracking-wider font-semibold">Total Views</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Decorative abstract shape -->
+        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- People who liked you -->
+        <section>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    💖 People who Liked You
+                </h2>
+                <span class="text-xs font-semibold px-2 py-1 bg-pink-100 text-pink-700 rounded-full">
+                    {{ likers.count }}
+                </span>
+            </div>
+            
+            <div class="space-y-4">
+                {% for liker in likers %}
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-pink-100">
+                                {% if liker.profile_picture %}
+                                    <img src="{{ liker.profile_picture.url }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <div class="w-full h-full bg-gray-100 flex items-center justify-center text-xl text-gray-400">👤</div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">{{ liker.display_name|default:"Anonymous" }}</h3>
+                                <p class="text-xs text-gray-500">{{ liker.city|default:"Somewhere" }}, {{ liker.nationality }}</p>
+                            </div>
+                        </div>
+                        <button hx-get="{% url 'profile_view' liker.id %}"
+                                hx-target="#modal-body"
+                                hx-swap="innerHTML"
+                                hx-on::after-swap="$dispatch('modal-open')"
+                                class="p-2 rounded-full bg-pink-50 text-pink-600 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                            👀
+                        </button>
+                    </div>
+                {% empty %}
+                    <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
+                        <p class="text-gray-400 font-medium">No one has liked you yet.</p>
+                        <p class="text-sm text-gray-400">Keep updating your profile!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Recent Visitors -->
+        <section>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    📈 Profile Visitors
+                </h2>
+                <span class="text-xs font-semibold px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                    Recent
+                </span>
+            </div>
+            
+            <div class="space-y-4">
+                {% for visitor in visitors %}
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-purple-100">
+                                {% if visitor.profile_picture %}
+                                    <img src="{{ visitor.profile_picture.url }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <div class="w-full h-full bg-gray-100 flex items-center justify-center text-xl text-gray-400">👤</div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">{{ visitor.display_name|default:"Anonymous" }}</h3>
+                                <p class="text-xs text-gray-500">Visited {{ visitor.last_view_time|timesince }} ago</p>
+                            </div>
+                        </div>
+                        <button hx-get="{% url 'profile_view' visitor.id %}"
+                                hx-target="#modal-body"
+                                hx-swap="innerHTML"
+                                hx-on::after-swap="$dispatch('modal-open')"
+                                class="p-2 rounded-full bg-purple-50 text-purple-600 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                            View
+                        </button>
+                    </div>
+                {% empty %}
+                    <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
+                        <p class="text-gray-400 font-medium">No views yet.</p>
+                        <p class="text-sm text-gray-400">Try liking more people!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

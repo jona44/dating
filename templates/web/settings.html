@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="page-content">
+<div class="max-w-2xl mx-auto py-8 px-4">
+  <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
+    <div class="p-8">
+      <h1 class="text-3xl font-black text-gray-900 mb-8">Settings</h1>
+      
+      <form method="post" 
+            hx-post="{% url 'settings' %}"
+            hx-target="this"
+            hx-swap="outerHTML"
+            class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Privacy Section -->
+        <div>
+          <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+            🔒 Privacy & Visibility
+          </h2>
+          <div class="bg-gray-50 p-6 rounded-2xl space-y-4 border border-gray-100">
+            <div class="flex items-center gap-3">
+              {{ form.is_visible }}
+              <div>
+                <label for="{{ form.is_visible.id_for_label }}" class="font-bold text-gray-800 cursor-pointer">
+                  Show me in Discovery
+                </label>
+                <p class="text-sm text-gray-500">When turned off, your profile won't be shown to new people.</p>
+              </div>
+            </div>
+            
+            {% if form.is_visible.errors %}
+              <p class="text-red-500 text-sm mt-2">{{ form.is_visible.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+
+
+        <div class="pt-6 border-t border-gray-100 flex gap-4">
+          <button type="submit" class="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-pink-700 hover:to-purple-700 shadow-lg transition transform hover:-translate-y-0.5">
+            <span class="htmx-indicator inline-block">
+              <svg class="animate-spin h-5 w-5 mr-2 inline" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
+            Save Settings
+          </button>
+        </div>
+      </form>
+
+      <!-- Danger Zone -->
+      <div class="mt-12 pt-8 border-t border-red-50">
+        <h2 class="text-xl font-bold mb-4 text-red-600">Danger Zone</h2>
+        <div class="bg-red-50 p-6 rounded-2xl border border-red-100" x-data="{ confirming: false }">
+          <p class="text-sm text-red-800 mb-4">
+            Once you delete your account, there is no going back. All your matches, messages, and photos will be permanently removed.
+          </p>
+          
+          <button x-show="!confirming" @click="confirming = true" 
+                  class="w-full py-3 border-2 border-red-200 text-red-600 rounded-xl font-bold hover:bg-red-100 transition">
+            Delete My Account
+          </button>
+          
+          <div x-show="confirming" x-cloak class="space-y-4">
+            <p class="font-bold text-red-700 text-center">Are you absolutely sure?</p>
+            <form method="post">
+              {% csrf_token %}
+              <div class="flex gap-3">
+                <button type="button" @click="confirming = false" class="flex-1 py-3 bg-white border border-gray-300 rounded-xl font-bold">
+                  Cancel
+                </button>
+                <button type="submit" name="delete_account" value="1" class="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg transition">
+                  Yes, Delete Forever
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

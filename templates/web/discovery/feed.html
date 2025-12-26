@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="page-content">
+<div class="max-w-7xl mx-auto py-8 px-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+        <div>
+            <h1 class="text-4xl font-black text-gray-900 tracking-tight">Discover</h1>
+            <p class="text-gray-500 font-medium">Find people who share your journey</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button hx-get="{% url 'preferences' %}"
+                    hx-target="#slideover-body"
+                    hx-swap="innerHTML"
+                    @click="slideoverOpen = true"
+                    class="px-5 py-2.5 bg-white border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm flex items-center gap-2">
+                ⚙️ Match Criteria
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+    {% for profile in profiles %}
+      {% include "web/discovery/partials/profile_card.html" %}
+    {% empty %}
+        <div class="col-span-full py-20 text-center animate-fade-in">
+            <div class="text-8xl mb-6">✨</div>
+            <h3 class="text-2xl font-bold text-gray-800">You've seen everyone!</h3>
+            <p class="text-gray-500 mt-2 max-w-md mx-auto">
+                Try adjusting your <a href="{% url 'preferences' %}" class="text-pink-600 font-bold hover:underline">match criteria</a> or check back later for new members.
+            </p>
+        </div>
+    {% endfor %}
+  </div>
+</div>
+</div>
+{% endblock %}

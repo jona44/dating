@@ -1,0 +1,118 @@
+<div id="profile-card-{{ profile.id }}" class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all h-full flex flex-col">
+    <!-- Profile Image Carousel -->
+    <div class="h-64 bg-gray-200 relative group overflow-hidden" x-data="{ activeSlide: 0, slides: [
+        {% if profile.profile_picture %}'{{ profile.profile_picture.url }}',{% endif %}
+        {% for photo in profile.photos.all %}'{{ photo.image.url }}',{% endfor %}
+    ] }">
+        
+        <!-- Slides -->
+        <template x-if="slides.length > 0">
+            <template x-for="(slide, index) in slides" :key="index">
+                <div x-show="activeSlide === index" 
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 transform scale-95"
+                     x-transition:enter-end="opacity-100 transform scale-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100 transform scale-100"
+                     x-transition:leave-end="opacity-0 transform scale-95"
+                     class="absolute inset-0 w-full h-full">
+                    <img :src="slide" class="w-full h-full object-cover">
+                </div>
+            </template>
+        </template>
+        
+        <!-- No Photos Fallback -->
+        <template x-if="slides.length === 0">
+            <div class="w-full h-full flex items-center justify-center text-white text-6xl bg-gradient-to-br from-pink-400 to-purple-500">
+                👤
+            </div>
+        </template>
+
+        <!-- Controls -->
+        <div class="absolute inset-0 flex justify-between items-center p-2 opacity-0 group-hover:opacity-100 transition-opacity" x-show="slides.length > 1">
+            <button @click.prevent.stop="activeSlide = activeSlide === 0 ? slides.length - 1 : activeSlide - 1" class="bg-black/50 text-white p-1 rounded-full hover:bg-black/70 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <button @click.prevent.stop="activeSlide = activeSlide === slides.length - 1 ? 0 : activeSlide + 1" class="bg-black/50 text-white p-1 rounded-full hover:bg-black/70 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+
+        <!-- Indicators -->
+        <div class="absolute bottom-2 left-0 right-0 flex justify-center gap-1" x-show="slides.length > 1">
+            <template x-for="(slide, index) in slides" :key="index">
+                <div class="w-1.5 h-1.5 rounded-full transition-colors" :class="activeSlide === index ? 'bg-white' : 'bg-white/50'"></div>
+            </template>
+        </div>
+        
+        <!-- Completeness Badge -->
+        <div class="absolute top-4 left-4 bg-black/40 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest z-10">
+            {{ profile.profile_completeness }}% Profile
+        </div>
+        
+        <!-- View Profile Button -->
+        <button 
+           hx-get="{% url 'profile_view' profile.id %}"
+           hx-target="#modal-body"
+           hx-swap="innerHTML"
+           hx-on::after-swap="$dispatch('modal-open')"
+           class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-medium hover:bg-white transition z-10">
+          View
+        </button>
+    </div>
+
+    <!-- Profile Info -->
+    <div class="p-6 flex-1 flex flex-col">
+        <div class="mb-4">
+            <div class="flex justify-between items-start">
+                <h2 class="font-bold text-2xl text-gray-800 mb-1">
+                    {{ profile.display_name|default:profile.user.email }}
+                </h2>
+                {% if profile.birth_date %}
+                {% load static %}
+                <span class="text-gray-600 text-xl font-normal">
+                  {% now "Y" as current_year %}
+                  {{ current_year|add:"-"|add:profile.birth_date.year }}
+                </span>
+                {% endif %}
+            </div>
+            
+            {% if profile.location or profile.city %}
+                <p class="text-gray-500 text-sm flex items-center gap-1">
+                    📍 {{ profile.city|default:profile.location }}
+                </p>
+            {% endif %}
+        </div>
+
+        <p class="text-gray-600 text-sm line-clamp-3 mb-6 flex-1">
+            {{ profile.bio|default:"Sharing life, love, and community." }}
+        </p>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+            <button
+                hx-post="{% url 'skip_profile' profile.id %}"
+                hx-target="#profile-card-{{ profile.id }}"
+                hx-swap="outerHTML"
+                class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition flex items-center justify-center gap-2">
+                <span>👎</span> Skip
+            </button>
+
+            {% if profile.is_liked %}
+            <button
+                disabled
+                class="flex-1 px-4 py-3 bg-gray-200 text-gray-400 rounded-xl font-bold cursor-not-allowed flex items-center justify-center gap-2 shadow-none">
+                <span>✓</span> Liked
+            </button>
+            {% else %}
+            <button
+                hx-post="{% url 'like_profile' profile.id %}?source=card"
+                hx-target="#profile-card-{{ profile.id }}"
+                hx-swap="outerHTML"
+                class="flex-1 px-4 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl font-bold hover:from-pink-700 hover:to-purple-700 transition shadow-lg flex items-center justify-center gap-2">
+                <span>❤️</span> Like
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>

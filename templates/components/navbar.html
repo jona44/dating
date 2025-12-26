@@ -1,0 +1,91 @@
+{% load static %}
+<nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <a href="/" class="flex items-center gap-2 text-xl sm:text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+            <img src="{% static 'images/favicon.png' %}" alt="Logo" class="w-8 h-8 sm:w-10 sm:h-10 object-contain">
+            DatingApp
+        </a>
+
+        <div class="flex items-center gap-2 sm:gap-4">
+            {% if user.is_authenticated %}
+                <button hx-get="{% url 'edit_profile' %}" 
+                        hx-target="main" 
+                        hx-swap="innerHTML"
+                        hx-select="#page-content" 
+                        hx-push-url="true"
+                        class="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded-xl transition">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 overflow-hidden border border-white shadow-sm">
+                        {% if user.profile.profile_picture %}
+                            <img src="{{ user.profile.profile_picture.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <span class="text-white text-lg flex items-center justify-center h-full">👤</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-gray-700 text-sm font-medium hidden sm:inline">
+                        {{ user.profile.display_name|default:user.email }}
+                    </span>
+                </button>
+                
+                <button hx-get="{% url 'search' %}" 
+                        hx-target="main" 
+                        hx-swap="innerHTML"
+                        hx-select="#page-content" 
+                        hx-push-url="true"
+                        class="text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition">
+                    🔍 <span class="hidden sm:inline">Search</span>
+                </button>
+                <button hx-get="{% url 'discovery_feed' %}" 
+                        hx-target="main" 
+                        hx-swap="innerHTML"
+                        hx-select="#page-content" 
+                        hx-push-url="true"
+                        class="text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition">
+                    ✨ <span class="hidden sm:inline">Discover</span>
+                </button>
+                <button hx-get="{% url 'activity' %}" 
+                        hx-target="main" 
+                        hx-swap="innerHTML"
+                        hx-select="#page-content" 
+                        hx-push-url="true"
+                        class="text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition">
+                    📈 <span class="hidden sm:inline">Activity</span>
+                </button>
+                <button hx-get="{% url 'inbox' %}" 
+                        hx-target="main" 
+                        hx-swap="innerHTML"
+                        hx-select="#page-content" 
+                        hx-push-url="true"
+                        class="text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition font-medium relative">
+                    💬 <span class="hidden sm:inline">Inbox</span>
+                    {% if unread_message_count > 0 %}
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">
+                        {{ unread_message_count }}
+                    </span>
+                    {% endif %}
+                </button>
+                <button hx-get="{% url 'settings' %}" 
+                        hx-target="main" 
+                        hx-swap="innerHTML"
+                        hx-select="#page-content" 
+                        hx-push-url="true"
+                        class="text-sm px-3 py-2 rounded-lg hover:bg-gray-100 transition">
+                    ⚙️ <span class="hidden sm:inline">Settings</span>
+                </button>
+                <a href="{% url 'logout' %}"
+                   class="text-sm text-red-500 px-3 py-2 rounded-lg hover:bg-red-50 transition">
+                    <span class="hidden sm:inline">Logout</span>
+                    <span class="sm:hidden">🚪</span>
+                </a>
+            {% else %}
+                <a href="{% url 'login' %}"
+                   class="text-sm text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-100 transition">
+                    Login
+                </a>
+                <a href="{% url 'signup' %}"
+                   class="text-sm bg-gradient-to-r from-pink-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition">
+                    Sign up
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

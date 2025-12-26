@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="page-content">
+<div class="max-w-4xl mx-auto py-8 px-4">
+  <h1 class="text-3xl font-bold mb-6">Search Profiles</h1>
+
+  <!-- Search Form -->
+  <form method="get" 
+        hx-get="{% url 'search' %}"
+        hx-target="#page-content"
+        hx-select="#page-content"
+        hx-push-url="true"
+        class="mb-8">
+    <div class="flex gap-3">
+      <input
+        type="text"
+        name="q"
+        value="{{ query }}"
+        placeholder="Search by name, location, or interests..."
+        class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+        autofocus>
+      <button
+        type="submit"
+        class="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl font-semibold hover:from-pink-700 hover:to-purple-700 transition">
+        🔍 Search
+      </button>
+    </div>
+  </form>
+
+  <!-- Search Results -->
+  {% if query %}
+    {% if results %}
+      <p class="text-gray-600 mb-4">Found {{ results|length }} result{{ results|length|pluralize }}</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for profile in results %}
+          <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+            <!-- Profile Image -->
+            <div class="h-48 bg-gradient-to-br from-pink-400 to-purple-500 relative">
+              {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture.url }}" alt="{{ profile.display_name }}" 
+                     class="w-full h-full object-cover">
+              {% else %}
+                <div class="w-full h-full flex items-center justify-center text-white text-5xl">
+                  👤
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Profile Info -->
+            <div class="p-4">
+              <h2 class="font-bold text-xl mb-1">
+                {{ profile.display_name|default:profile.user.email }}
+              </h2>
+
+              {% if profile.location %}
+                <p class="text-gray-500 text-sm mb-2">📍 {{ profile.location }}</p>
+              {% endif %}
+
+              <p class="text-gray-700 text-sm line-clamp-2 mb-4">
+                {{ profile.bio|default:"No bio yet." }}
+              </p>
+
+              <!-- Action Buttons -->
+              <button hx-get="{% url 'profile_view' profile.id %}"
+                      hx-target="#modal-body"
+                      hx-swap="innerHTML"
+                      @click="modalOpen = true"
+                      class="block w-full text-center px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg font-semibold hover:from-pink-700 hover:to-purple-700 transition">
+                View Profile
+              </button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-16">
+        <div class="text-6xl mb-4">🔍</div>
+        <p class="text-gray-500 text-lg">No results found for "{{ query }}"</p>
+        <p class="text-gray-400 text-sm mt-2">Try searching with different keywords</p>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="text-center py-16">
+      <div class="text-6xl mb-4">👋</div>
+      <p class="text-gray-500 text-lg">Start searching to find amazing people!</p>
+    </div>
+  {% endif %}
+</div>
+</div>
+{% endblock %}

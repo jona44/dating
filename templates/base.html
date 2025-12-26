@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dating App{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+
+    {% load tailwind_tags %}
+    {% tailwind_css %}
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+
+    <!-- Custom Styles & Animations -->
+    <style>
+        /* Loading indicator */
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+        .htmx-indicator {
+            display: none;
+        }
+        
+        /* Smooth transitions */
+        .transition-standard {
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+        
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* Pulse animation for online indicators */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+
+<body x-data="{ slideoverOpen: false, modalOpen: false }" 
+      @slideover-open.window="slideoverOpen = true"
+      @slideover-close.window="slideoverOpen = false"
+      @modal-open.window="modalOpen = true"
+      @modal-close.window="modalOpen = false"
+      class="bg-gray-100 min-h-screen flex flex-col">
+
+    {% include "components/navbar.html" %}
+
+    <main class="flex-1 container mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 pb-32">
+        {% include "components/messages.html" %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="fixed bottom-0 left-0 right-0 bg-white border-t py-6 z-40">
+        <div class="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs sm:text-sm text-gray-500">
+            <p>© {{ now|date:"Y" }} Dating App</p>
+            <div class="flex gap-6">
+                <button hx-get="{% url 'help' %}" 
+                        hx-target="main" 
+                        hx-swap="innerHTML"
+                        hx-select="#page-content" 
+                        hx-push-url="true"
+                        class="hover:text-pink-600 transition font-medium cursor-pointer">
+                    Help & FAQ
+                </button>
+                <a href="{% url 'privacy_policy' %}" class="hover:text-pink-600 transition font-medium">Privacy Policy</a>
+                <a href="{% url 'terms' %}" class="hover:text-pink-600 transition font-medium">Terms</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- HTMX Components -->
+    {% include "components/modal.html" %}
+    {% include "components/slideover.html" %}
+    {% include "components/toast.html" %}
+
+    <!-- CSRF & HTMX Initialization -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.addEventListener("htmx:configRequest", (e) => {
+                e.detail.headers["X-CSRFToken"] = "{{ csrf_token }}";
+            });
+            
+            // Debugging listeners
+            window.addEventListener('slideover-open', () => console.log('Slideover Open Triggered'));
+            window.addEventListener('modal-open', () => console.log('Modal Open Triggered'));
+        });
+    </script>
+
+</body>
+</html>

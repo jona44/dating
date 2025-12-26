@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="page-content">
+<div class="max-w-4xl mx-auto py-8 px-4">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Messages</h1>
+    <button hx-get="{% url 'edit_profile' %}"
+            hx-target="main"
+            hx-swap="innerHTML"
+            hx-select="#page-content"
+            hx-push-url="true"
+            class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition text-sm">
+      ⚙️ Edit Profile
+    </button>
+  </div>
+
+  {% if matches %}
+    <div class="space-y-3">
+      {% for match in matches %}
+        {% if match.conversation %}
+          <a href="{% url 'conversation_detail' match.conversation.id %}"
+             class="flex items-center gap-4 p-4 bg-white rounded-xl shadow hover:bg-gray-50 transition relative">
+        {% else %}
+          <div class="flex items-center gap-4 p-4 bg-white rounded-xl shadow opacity-50 relative">
+        {% endif %}
+          
+          <!-- Profile Picture -->
+          <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {% if match.other.profile_picture %}
+              <img src="{{ match.other.profile_picture.url }}" alt="{{ match.other.display_name }}" class="w-full h-full object-cover">
+            {% else %}
+              <span class="text-2xl">👤</span>
+            {% endif %}
+          </div>
+
+          <!-- Match Info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <p class="font-semibold text-lg truncate">
+                {{ match.other.display_name|default:match.other.user.email }}
+              </p>
+              
+              <!-- Unread Badge -->
+              {% if match.unread_count > 0 %}
+                <span class="bg-pink-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  {{ match.unread_count }}
+                </span>
+              {% endif %}
+            </div>
+            
+            <p class="text-sm text-gray-500">
+              {% if match.conversation %}
+                {% if match.unread_count > 0 %}
+                  {{ match.unread_count }} new message{{ match.unread_count|pluralize }}
+                {% else %}
+                  Tap to send a message
+                {% endif %}
+              {% else %}
+                Matched {{ match.created_at|timesince }} ago · Conversation not created
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Arrow indicator for clickable items -->
+          {% if match.conversation %}
+            <div class="text-gray-400">→</div>
+          {% endif %}
+
+        {% if match.conversation %}
+          </a>
+        {% else %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-16">
+      <div class="text-6xl mb-4">💔</div>
+      <p class="text-gray-500 text-lg mb-4">No matches yet</p>
+      <button hx-get="{% url 'discovery_feed' %}" 
+              hx-target="main" 
+              hx-swap="innerHTML" 
+              hx-select="#page-content"
+              hx-push-url="true"
+              class="inline-block px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg font-semibold hover:from-pink-700 hover:to-purple-700 transition">
+        Start Discovering
+      </button>
+    </div>
+  {% endif %}
+</div>
+</div>
+{% endblock %}

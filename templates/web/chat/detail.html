@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto h-[80vh] flex flex-col">
+
+  <div class="flex-1 overflow-y-auto space-y-3 p-4">
+    {% for message in messages %}
+      <div class="{% if message.sender == request.user %}text-right{% endif %}">
+        <div class="inline-block px-4 py-2 rounded-xl
+          {% if message.sender == request.user %}
+            bg-pink-600 text-white
+          {% else %}
+            bg-gray-200
+          {% endif %}
+        ">
+          {{ message.body }}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <form
+    hx-post="{% url 'send_message' conversation.id %}"
+    hx-target="#messages"
+    hx-swap="afterend"
+    class="p-4 flex gap-2 border-t"
+  >
+    {% csrf_token %}
+    <input
+      type="text"
+      name="body"
+      placeholder="Type a message…"
+      class="flex-1 border rounded-lg px-4 py-2"
+    />
+    <button class="px-4 py-2 bg-pink-600 text-white rounded-lg">
+      Send
+    </button>
+  </form>
+
+</div>
+
+
+<script>
+  const convoId = "{{ conversation.id }}";
+  const socket = new WebSocket(
+    `ws://${window.location.host}/ws/chat/${convoId}/`
+  );
+
+  socket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    const container = document.querySelector(".overflow-y-auto");
+
+    container.insertAdjacentHTML(
+      "beforeend",
+      `<div class="text-left">
+         <div class="inline-block px-4 py-2 rounded-xl bg-gray-200">
+           ${data.message}
+         </div>
+       </div>`
+    );
+  };
+
+  document.querySelector("form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const input = this.querySelector("input[name='body']");
+    socket.send(JSON.stringify({
+      message: input.value
+    }));
+    input.value = "";
+  });
+</script>
+
+{% endblock %}

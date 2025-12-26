@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Step {{ step }} of {{ total_steps }} - More About You{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto py-12 px-4">
+    <!-- Progress Bar -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-pink-600">Step {{ step }} of {{ total_steps }}</span>
+            <span class="text-sm font-medium text-gray-500">{{ progress }}% Complete</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-gradient-to-r from-pink-500 to-purple-600 h-2 rounded-full transition-all duration-500" style="width: {{ progress }}%"></div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl p-8 animate-fade-in">
+        <h1 class="text-3xl font-bold mb-2">More About You</h1>
+        <p class="text-gray-600 mb-8">These details help common interests and meaningful matches find you.</p>
+
+        <form method="post" class="space-y-6" x-data="{ children_status: '{{ form.children_status.value|default:'' }}' }">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div {% if field.name == 'children_count' %}x-show="children_status === 'have_children'" x-cloak{% endif %}>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                <p class="mt-1 text-xs text-red-500">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="pt-4 flex gap-4">
+                <a href="{% url 'onboarding_step' 1 %}" class="flex-1 py-4 text-center border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">
+                    ← Back
+                </a>
+                <button type="submit" class="flex-[2] py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold rounded-xl hover:from-pink-700 hover:to-purple-700 transition shadow-lg">
+                    Save & Continue →
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

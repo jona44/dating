@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8 px-4">
+  <div class="bg-white rounded-xl shadow-lg p-6">
+    <h1 class="text-3xl font-bold mb-6">Discovery Preferences</h1>
+    
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+      
+      <div class="space-y-4">
+        <!-- Age Range -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              {{ form.min_age.label }}
+            </label>
+            {{ form.min_age }}
+            {% if form.min_age.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.min_age.errors.0 }}</p>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              {{ form.max_age.label }}
+            </label>
+            {{ form.max_age }}
+            {% if form.max_age.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.max_age.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Gender Preference -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            {{ form.interested_in.label }}
+          </label>
+          {{ form.interested_in }}
+          {% if form.interested_in.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.interested_in.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Location & Origin -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              {{ form.pref_city.label }}
+            </label>
+            {{ form.pref_city }}
+            {% if form.pref_city.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.pref_city.errors.0 }}</p>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              {{ form.pref_nationality.label }}
+            </label>
+            {{ form.pref_nationality }}
+            {% if form.pref_nationality.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.pref_nationality.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Ethnicity & Lifestyle -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              {{ form.pref_ethnicity.label }}
+            </label>
+            {{ form.pref_ethnicity }}
+            {% if form.pref_ethnicity.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.pref_ethnicity.errors.0 }}</p>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              {{ form.pref_max_children.label }}
+            </label>
+            {{ form.pref_max_children }}
+            {% if form.pref_max_children.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.pref_max_children.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Visibility Toggle -->
+        <div class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+          {{ form.show_me }}
+          <label class="text-sm font-medium text-gray-700">
+            {{ form.show_me.label }}
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex gap-4">
+        <button type="submit" 
+                class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 transition">
+          Save Preferences
+        </button>
+        <a href="{% url 'discovery_feed' %}" 
+           class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition text-center">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Step {{ step }} of {{ total_steps }} - Your Journey{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto py-12 px-4">
+    <!-- Progress Bar -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-pink-600">Step {{ step }} of {{ total_steps }}</span>
+            <span class="text-sm font-medium text-gray-500">{{ progress }}% Complete</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-gradient-to-r from-pink-500 to-purple-600 h-2 rounded-full transition-all duration-500" style="width: {{ progress }}%"></div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl p-8 animate-fade-in border-t-8 border-pink-500">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-3xl">🤝</span>
+            <h1 class="text-3xl font-bold">Your Journey</h1>
+        </div>
+        
+        <div class="bg-pink-50 p-4 rounded-xl mb-8">
+            <p class="text-sm text-pink-800">
+                <strong>Optional Step:</strong> This information is meant to help you find people with similar experiences or specific support needs. You are NOT required to fill this out to use the platform.
+            </p>
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div class="{% if field.name == 'support_seeking' %}flex items-center gap-3 bg-gray-50 p-4 rounded-xl{% endif %}">
+                {% if field.name == 'support_seeking' %}
+                    {{ field }}
+                    <label for="{{ field.id_for_label }}" class="text-sm font-semibold text-gray-700 cursor-pointer">
+                        {{ field.label }}
+                    </label>
+                {% else %}
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                {% endif %}
+                
+                {% if field.help_text %}
+                <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                <p class="mt-1 text-xs text-red-500">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="pt-4 flex flex-col gap-4">
+                <button type="submit" class="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold rounded-xl hover:from-pink-700 hover:to-purple-700 transition shadow-lg">
+                    Save & Continue →
+                </button>
+                <div class="flex gap-4">
+                    <a href="{% url 'onboarding_step' 2 %}" class="flex-1 py-3 text-center border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition">
+                        Back
+                    </a>
+                    <a href="{% url 'onboarding_step' 4 %}" class="flex-1 py-3 text-center text-gray-500 hover:text-gray-700 transition">
+                        Skip this step
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

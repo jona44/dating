@@ -1,0 +1,21 @@
+<div class="flex {% if message.sender == profile %}justify-end{% else %}justify-start{% endif %} mb-3">
+  <div class="max-w-[70%]">
+    <!-- Message bubble -->
+    <div class="{% if message.sender == profile %}bg-gradient-to-r from-pink-500 to-purple-600 text-white{% else %}bg-white border{% endif %} rounded-2xl px-4 py-3 shadow-sm">
+      <p class="text-sm break-words">{{ message.body }}</p>
+    </div>
+    
+    <!-- Timestamp and read status -->
+    <div class="flex items-center gap-2 mt-1 px-2 {% if message.sender == profile %}justify-end{% endif %}">
+      <span class="text-xs text-gray-400">{{ message.created_at|date:"g:i A" }}</span>
+      
+      {% if message.sender == profile %}
+        {% if message.is_read %}
+          <span class="text-xs text-blue-500" title="Read">✓✓</span>
+        {% else %}
+          <span class="text-xs text-gray-400" title="Sent">✓</span>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>

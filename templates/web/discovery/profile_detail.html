@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8 px-4">
+  <!-- Profile Header Card -->
+  <div class="bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
+    <!-- Header with background -->
+    <div class="h-64 bg-gradient-to-r from-pink-500 to-purple-600 relative">
+      {% if profile.profile_picture %}
+        <img src="{{ profile.profile_picture.url }}" alt="{{ profile.display_name }}" 
+             class="w-40 h-40 rounded-full border-4 border-white absolute -bottom-20 left-8 object-cover shadow-lg">
+      {% else %}
+        <div class="w-40 h-40 rounded-full border-4 border-white bg-gray-300 absolute -bottom-20 left-8 flex items-center justify-center text-6xl shadow-lg">
+          👤
+        </div>
+      {% endif %}
+      
+      <div class="absolute top-6 right-6 flex gap-2">
+        <a href="{% url 'discovery_feed' %}" 
+           class="px-4 py-2 bg-black/20 backdrop-blur-md text-white border border-white/30 rounded-full hover:bg-black/40 transition flex items-center gap-2">
+          ← <span class="hidden sm:inline">Back to Feed</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Profile Identity -->
+    <div class="pt-24 px-8 pb-8">
+      <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
+        <div>
+          <h1 class="text-4xl font-black text-gray-900 flex items-center gap-3">
+            {{ profile.display_name|default:profile.user.email }}
+            {% if age %}
+              <span class="text-gray-400 font-normal">, {{ age }}</span>
+            {% endif %}
+            {% if profile.is_verified %}
+              <span class="text-blue-500 text-xl" title="Verified Profile">verified_user</span>
+            {% endif %}
+          </h1>
+          
+          <div class="flex flex-wrap gap-x-6 gap-y-2 mt-3 text-gray-600 font-medium">
+            {% if profile.city or profile.location %}
+              <span class="flex items-center gap-1.5">📍 {{ profile.city|default:profile.location }}</span>
+            {% endif %}
+            {% if profile.gender %}
+              <span class="flex items-center gap-1.5">👤 {{ profile.get_gender_display }}</span>
+            {% endif %}
+            {% if profile.nationality %}
+              <span class="flex items-center gap-1.5">🌍 {{ profile.nationality }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 w-full md:w-auto">
+          <button 
+            hx-post="{% url 'skip_profile' profile.id %}"
+            hx-target="#profile-actions"
+            class="flex-1 md:flex-none px-8 py-3 bg-gray-100 text-gray-700 rounded-2xl font-bold hover:bg-gray-200 transition">
+            Skip
+          </button>
+          
+          <button 
+            hx-post="{% url 'like_profile' profile.id %}"
+            hx-target="#profile-actions"
+            hx-swap="innerHTML"
+            class="flex-1 md:flex-none px-8 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-2xl font-bold hover:from-pink-700 hover:to-purple-700 shadow-lg transition transform hover:-translate-y-0.5">
+            ❤️ Like
+          </button>
+        </div>
+      </div>
+      
+      <div id="profile-actions" class="mb-6"></div>
+
+      <!-- Bio -->
+      {% if profile.bio %}
+        <div class="mb-8">
+          <h2 class="text-xl font-bold mb-3 text-gray-800 flex items-center gap-2">
+            ✨ About Me
+          </h2>
+          <p class="text-gray-700 text-lg leading-relaxed whitespace-pre-line">{{ profile.bio }}</p>
+        </div>
+      {% endif %}
+
+      <!-- Hobbies -->
+      {% if profile.hobbies %}
+        <div class="mb-8">
+          <h2 class="text-xl font-bold mb-3 text-gray-800">🎯 Interests</h2>
+          <div class="flex flex-wrap gap-2">
+            {% for hobby in profile.hobbies.split|slice:":20" %}
+              <span class="px-4 py-2 bg-pink-50 text-pink-700 rounded-full text-sm font-semibold border border-pink-100 italic">
+                #{{ hobby }}
+              </span>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Detail Sections Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <!-- Lifestyle Details -->
+    <div class="bg-white rounded-3xl shadow-lg p-8">
+      <h3 class="text-xl font-bold mb-6 flex items-center gap-2">🥂 Lifestyle</h3>
+      <ul class="space-y-4">
+        {% if profile.education_level %}
+          <li class="flex justify-between items-center border-b border-gray-50 pb-2">
+            <span class="text-gray-500 text-sm">Education</span>
+            <span class="font-medium text-gray-800">{{ profile.get_education_level_display }}</span>
+          </li>
+        {% endif %}
+        {% if profile.employment_status %}
+          <li class="flex justify-between items-center border-b border-gray-50 pb-2">
+            <span class="text-gray-500 text-sm">Work</span>
+            <span class="font-medium text-gray-800">{{ profile.get_employment_status_display }}</span>
+          </li>
+        {% endif %}
+        {% if profile.height %}
+          <li class="flex justify-between items-center border-b border-gray-50 pb-2">
+            <span class="text-gray-500 text-sm">Height</span>
+            <span class="font-medium text-gray-800">{{ profile.height }} cm</span>
+          </li>
+        {% endif %}
+        {% if profile.smoking %}
+          <li class="flex justify-between items-center border-b border-gray-50 pb-2">
+            <span class="text-gray-500 text-sm">Smoking</span>
+            <span class="font-medium text-gray-800">{{ profile.get_smoking_display }}</span>
+          </li>
+        {% endif %}
+        {% if profile.drinking %}
+          <li class="flex justify-between items-center border-b border-gray-50 pb-2">
+            <span class="text-gray-500 text-sm">Drinking</span>
+            <span class="font-medium text-gray-800">{{ profile.get_drinking_display }}</span>
+          </li>
+        {% endif %}
+        {% if profile.children_status %}
+          <li class="flex justify-between items-center border-b border-gray-50 pb-2">
+            <span class="text-gray-500 text-sm">Children</span>
+            <span class="font-medium text-gray-800">{{ profile.get_children_status_display }}</span>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+
+    <!-- Background Details -->
+    <div class="bg-white rounded-3xl shadow-lg p-8">
+      <h3 class="text-xl font-bold mb-6 flex items-center gap-2">👤 Background</h3>
+      <ul class="space-y-4">
+        {% if profile.nationality %}
+          <li class="flex justify-between items-center border-b border-gray-50 pb-2">
+            <span class="text-gray-500 text-sm">Country</span>
+            <span class="font-medium text-gray-800">{{ profile.nationality }}</span>
+          </li>
+        {% endif %}
+        {% if profile.ethnicity %}
+          <li class="flex justify-between items-center border-b border-gray-50 pb-2">
+            <span class="text-gray-500 text-sm">Ethnicity</span>
+            <span class="font-medium text-gray-800">{{ profile.get_ethnicity_display }}</span>
+          </li>
+        {% endif %}
+        <!-- HIV Journey Status (only shown if provided) -->
+        {% if profile.treatment_status or profile.support_seeking %}
+          <li class="pt-4 mt-2 border-t border-gray-100">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Community Info</h4>
+            {% if profile.treatment_status %}
+               <div class="flex justify-between items-center mb-2">
+                  <span class="text-gray-500 text-sm">Status Info</span>
+                  <span class="font-medium text-gray-800">{{ profile.get_treatment_status_display }}</span>
+               </div>
+            {% endif %}
+            {% if profile.support_seeking %}
+               <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold">
+                 <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                 Looking for support
+               </div>
+            {% endif %}
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Photo Gallery -->
+  {% if profile.photos.all %}
+    <div class="bg-white rounded-3xl shadow-lg p-8 mb-8">
+      <h3 class="text-xl font-bold mb-6">📸 Photos</h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {% for photo in profile.photos.all %}
+          <div class="aspect-square rounded-2xl overflow-hidden hover:opacity-90 transition cursor-pointer">
+            <img src="{{ photo.image.url }}" class="w-full h-full object-cover">
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Reported UI -->
+  <div class="flex justify-center mt-12">
+    <a href="{% url 'report_user' profile.id %}" class="text-sm text-gray-400 hover:text-red-500 transition">
+      🚩 Report or Block {{ profile.display_name|default:profile.user.email }}
+    </a>
+  </div>
+</div>
+{% endblock %}

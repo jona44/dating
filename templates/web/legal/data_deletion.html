@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Data Deletion Instructions - Dating App{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-12 px-4">
+    <div class="bg-white rounded-2xl shadow-sm border p-8 md:p-12">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8 text-center">Data Deletion Instructions</h1>
+        
+        <div class="prose prose-pink max-w-none text-gray-600 space-y-6">
+            <p class="text-lg leading-relaxed text-center">
+                We value your privacy and give you full control over your data.
+            </p>
+
+            <section class="bg-pink-50 rounded-xl p-6 border border-pink-100">
+                <h2 class="text-xl font-semibold text-pink-700 mb-4">How to Delete Your Data</h2>
+                <p class="text-pink-900 mb-4">
+                    If you wish to delete your account and all associated data, follow these simple steps:
+                </p>
+                <ol class="list-decimal list-inside space-y-2 text-pink-900">
+                    <li>Log in to your account.</li>
+                    <li>Navigate to the <strong>Settings</strong> page.</li>
+                    <li>Scroll to the bottom of the page.</li>
+                    <li>Click the <strong>"Delete Account"</strong> button.</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">What Happens After Deletion?</h2>
+                <p>
+                    When you delete your account:
+                </p>
+                <ul class="list-disc list-inside space-y-2">
+                    <li>Your profile is immediately removed from the discovery feed.</li>
+                    <li>All your matches and conversations are permanently deleted.</li>
+                    <li>Your personal information (name, email, age, etc.) is scrubbed from our database.</li>
+                    <li>Any uploaded photos are removed from our storage.</li>
+                </ul>
+                <p class="mt-4 italic">
+                    Note: This action is permanent and cannot be undone.
+                </p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Questions?</h2>
+                <p>
+                    If you have any trouble deleting your data or have questions about our data retention policies, please reach out to us at <a href="mailto:support@datingapp.com" class="text-pink-600 font-medium">support@datingapp.com</a>.
+                </p>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
