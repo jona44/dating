@@ -1,0 +1,13 @@
+[Unit]
+Description=DatingApp Daphne Service
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/var/www/dating
+ExecStart=/var/www/dating/env/bin/daphne -b 127.0.0.1 -p 8000 core.asgi:application
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

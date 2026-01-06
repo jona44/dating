@@ -187,8 +187,8 @@ CHANNEL_LAYERS = {
 }
 
 # Production Security Settings
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -220,7 +220,7 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Adjust as needed (optional, mandatory)
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http' if DEBUG else os.getenv('ACCOUNT_DEFAULT_HTTP_PROTOCOL', 'https')
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = os.getenv('ACCOUNT_DEFAULT_HTTP_PROTOCOL', 'https')
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -256,7 +256,4 @@ INTERNAL_IPS = [
 ]
 NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
 
-# In local development, force allauth to use http for all generated URLs
-# to satisfy Facebook's treatment of localhost.
-if DEBUG:
-    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+

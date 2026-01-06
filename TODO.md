@@ -64,3 +64,6 @@
 - [ ] Configure Redis for production
 - [ ] Set up database migrations for production
 - [x] Create deployment documentation
+
+
+https://interstreet-helpless-dane.ngrok-free.dev -> http://localhost:8000
