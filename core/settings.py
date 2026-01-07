@@ -20,7 +20,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-for-dev')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') if os.getenv('ALLOWED_HOSTS') else ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS').split(',')] if os.getenv('ALLOWED_HOSTS') else ['localhost', '127.0.0.1', '192.168.88.252', '*']
 
 
 # Application definition
@@ -297,7 +297,7 @@ SIMPLE_JWT = {
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all in dev, restrict in production
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else []
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS',  "http://localhost:8081,http://192.168.88.252:8081").split(',')
 
 # Spectacular Settings
 SPECTACULAR_SETTINGS = {
@@ -306,3 +306,11 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
+
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://192.168.88.252:8000",
+]
+

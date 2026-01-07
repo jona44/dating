@@ -4,9 +4,28 @@ from discovery.models import Preference
 from interactions.models import Like, Match, Block, Report, Skip, ProfileView
 from messaging.models import Conversation, Message, MessageRead
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 # ==================== ACCOUNTS SERIALIZERS ====================
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Custom Serializer to handle both 'username' and 'email' fields.
+    Frontend might send 'username' while Backend expects 'email'.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add username as an optional field or copy it to email
+        if self.initial_data:
+            username = self.initial_data.get('username')
+            email = self.initial_data.get('email')
+            
+            # Ensure both email and username are available if either is provided
+            if username and not email:
+                self.initial_data['email'] = username
+            elif email and not username:
+                self.initial_data['username'] = email
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for User model"""
@@ -118,7 +137,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
             'hobbies', 'height', 'smoking', 'drinking',
             'diagnosis_year', 'treatment_status', 'support_seeking',
             'disclosure_comfort', 'is_visible', 'is_verified',
-            'is_complete', 'profile_completeness',
+            'is_complete', 'onboarding_step', 'profile_completeness',
             'photos', 'all_photo_urls', 'created_at', 'last_seen'
         ]
         read_only_fields = [
@@ -173,7 +192,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
             'education_level', 'children_status', 'children_count',
             'hobbies', 'height', 'smoking', 'drinking',
             'diagnosis_year', 'treatment_status', 'support_seeking',
-            'disclosure_comfort', 'is_visible'
+            'disclosure_comfort', 'is_visible', 'onboarding_step', 'is_complete'
         ]
 
 

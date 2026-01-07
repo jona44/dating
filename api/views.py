@@ -82,6 +82,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
     me: Get current user's profile
     """
     permission_classes = [IsAuthenticated]
+    pagination_class = None
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['gender', 'city', 'nationality', 'ethnicity']
     search_fields = ['display_name', 'bio', 'hobbies']
@@ -186,17 +187,27 @@ class ProfileViewSet(viewsets.ModelViewSet):
             ProfileDetailSerializer(instance, context={'request': request}).data
         )
     
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
-        """Get current user's profile"""
+        """Get or update current user's profile"""
         if not hasattr(request.user, 'profile'):
             return Response(
                 {'detail': 'Profile not found.'},
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        instance = request.user.profile
+        
+        if request.method == 'PATCH':
+            serializer = ProfileUpdateSerializer(instance, data=request.data, partial=True)
+            if not serializer.is_valid():
+                print(f"Profile update error: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+            return Response(ProfileDetailSerializer(instance, context={'request': request}).data)
+            
         serializer = ProfileDetailSerializer(
-            request.user.profile,
+            instance,
             context={'request': request}
         )
         return Response(serializer.data)
@@ -417,6 +428,19 @@ class LikeViewSet(viewsets.ModelViewSet):
             ).data
         
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'])
+    def received(self, request):
+        """Get likes received by the current user"""
+        if not hasattr(request.user, 'profile'):
+            return Response([])
+        
+        likes = Like.objects.filter(
+            to_profile=request.user.profile
+        ).select_related('from_profile', 'to_profile').order_by('-created_at')
+        
+        serializer = LikeSerializer(likes, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 class MatchViewSet(viewsets.ReadOnlyModelViewSet):
