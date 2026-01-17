@@ -11,21 +11,53 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
-    Custom Serializer to handle both 'username' and 'email' fields.
-    Frontend might send 'username' while Backend expects 'email'.
+    Custom Serializer to handle both 'username' and 'email' fields in the request.
+    The User model uses 'email' as the unique identifier instead of 'username'.
     """
+    # Accept both 'username' and 'email' keys from clients
+    username = serializers.CharField(write_only=True, required=False)
+    email = serializers.EmailField(write_only=True, required=False)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Add username as an optional field or copy it to email
-        if self.initial_data:
-            username = self.initial_data.get('username')
-            email = self.initial_data.get('email')
+        # Make the requirement optional for the main identifier field (e.g. 'email')
+        # because we might provide 'username' instead, which we map in validate()
+        if self.username_field in self.fields:
+            self.fields[self.username_field].required = False
+
+    def validate(self, attrs):
+        # The parent TokenObtainPairSerializer uses self.username_field to find the identifier.
+        # For our User model, self.username_field is 'email'.
+        
+        # Determine the identifier from provided fields
+        username_val = attrs.get('username')
+        email_val = attrs.get('email')
+        
+        # Prefer 'email' if provided, then 'username'
+        identifier = email_val or username_val
+        
+        if identifier:
+            # Map the identifier to the field the parent serializer expects ('email')
+            attrs[self.username_field] = identifier
             
-            # Ensure both email and username are available if either is provided
-            if username and not email:
-                self.initial_data['email'] = username
-            elif email and not username:
-                self.initial_data['username'] = email
+            # Also ensure 'username' key exists in attrs if parent expects it (usually not if USERNAME_FIELD is email)
+            # but some versions of SimpleJWT might still look for 'username' in attrs
+            if 'username' not in attrs:
+                 attrs['username'] = identifier
+        
+        try:
+            return super().validate(attrs)
+        except Exception as e:
+            # Only print error in development for debugging
+            from django.conf import settings
+            if settings.DEBUG:
+                print(f"Login failure for identifier '{identifier}': {str(e)}")
+            raise e
+
+
+
+
+
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for User model"""
@@ -233,11 +265,21 @@ class MatchSerializer(serializers.ModelSerializer):
     profile1 = ProfileListSerializer(read_only=True)
     profile2 = ProfileListSerializer(read_only=True)
     other_profile = serializers.SerializerMethodField()
+    conversation_id = serializers.SerializerMethodField()
     
     class Meta:
         model = Match
-        fields = ['id', 'profile1', 'profile2', 'other_profile', 'created_at']
+        fields = ['id', 'profile1', 'profile2', 'other_profile', 'conversation_id', 'created_at']
         read_only_fields = ['id', 'profile1', 'profile2', 'created_at']
+        
+    def get_conversation_id(self, obj):
+        from messaging.models import Conversation
+        conversation = Conversation.objects.filter(
+            participants=obj.profile1
+        ).filter(
+            participants=obj.profile2
+        ).first()
+        return str(conversation.id) if conversation else None
         
     def get_other_profile(self, obj):
         request = self.context.get('request')
@@ -300,11 +342,12 @@ class ProfileViewSerializer(serializers.ModelSerializer):
 class MessageSerializer(serializers.ModelSerializer):
     """Serializer for messages"""
     sender = ProfileListSerializer(read_only=True)
+    sender_id = serializers.UUIDField(source='sender.id', read_only=True)
     is_read = serializers.SerializerMethodField()
     
     class Meta:
         model = Message
-        fields = ['id', 'conversation', 'sender', 'body', 'is_read', 'created_at']
+        fields = ['id', 'conversation', 'sender', 'sender_id', 'body', 'is_read', 'created_at']
         read_only_fields = ['id', 'sender', 'created_at']
         
     def get_is_read(self, obj):

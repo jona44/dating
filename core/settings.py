@@ -20,7 +20,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-for-dev')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS').split(',')] if os.getenv('ALLOWED_HOSTS') else ['localhost', '127.0.0.1', '192.168.88.252', '*']
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS').split(',')] if os.getenv('ALLOWED_HOSTS') else ['localhost', '127.0.0.1', '192.168.88.252', '192.168.88.244', '*']
 
 
 # Application definition
@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     # API
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'drf_spectacular',
     'api',
@@ -96,7 +97,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
-
 
 
 AUTHENTICATION_BACKENDS = [
@@ -170,7 +170,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/1')
+REDIS_URL = os.getenv('REDIS_URL', '')
 
 CACHES = {
     "default": {
@@ -178,22 +178,30 @@ CACHES = {
         "LOCATION": "typing-indicators",
     },
     "presence": {
-        "BACKEND": "django_redis.cache.RedisCache" if "redis" in REDIS_URL else "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": REDIS_URL if "redis" in REDIS_URL else "presence-cache",
+        "BACKEND": "django_redis.cache.RedisCache" if REDIS_URL else "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": REDIS_URL if REDIS_URL else "presence-cache",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        } if "redis" in REDIS_URL else {}
+        } if REDIS_URL else {}
     }
 }
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer" if "redis" in REDIS_URL else "channels.layers.InMemoryChannelLayer",
-        "CONFIG": {
-            "hosts": [REDIS_URL],
-        } if "redis" in REDIS_URL else {},
-    },
-}
+# Channel Layers - uses InMemory if Redis is not available
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL],
+            },
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
 
 # Production Security Settings
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -297,7 +305,7 @@ SIMPLE_JWT = {
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all in dev, restrict in production
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS',  "http://localhost:8081,http://192.168.88.252:8081").split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS',  "http://localhost:8081,http://192.168.88.252:8081,http://192.168.88.244:8081").split(',')
 
 # Spectacular Settings
 SPECTACULAR_SETTINGS = {
@@ -312,5 +320,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://192.168.88.252:8000",
+    "http://192.168.88.244:8000",
 ]
 

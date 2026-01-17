@@ -29,7 +29,7 @@ urlpatterns = [
     path('auth/login/', TokenObtainPairView.as_view(serializer_class=CustomTokenObtainPairSerializer), name='token_obtain_pair'),
     path('auth/token/', TokenObtainPairView.as_view(serializer_class=CustomTokenObtainPairSerializer), name='token_obtain_pair_alias'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('auth/logout/', logout_user, name='logout'),
+    path('auth/logout/', logout_user, name='api_logout'),
     path('auth/me/', current_user, name='current-user'),
     
     # ViewSet routes
