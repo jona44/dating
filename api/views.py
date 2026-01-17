@@ -403,22 +403,37 @@ class LikeViewSet(viewsets.ModelViewSet):
         match_obj = None
         
         if mutual_like:
-            # Create match
+            # Create match - Ensure consistent ordering (profile1 < profile2)
+            p1, p2 = sorted([current_profile, to_profile], key=lambda p: p.id)
+            
             match_obj, match_created = Match.objects.get_or_create(
-                profile1=min(current_profile, to_profile, key=lambda p: str(p.id)),
-                profile2=max(current_profile, to_profile, key=lambda p: str(p.id))
+                profile1=p1,
+                profile2=p2
             )
             
-            if match_created:
-                # Create conversation for the match
+            is_match = True
+            
+            # Find or create conversation
+            conversation = Conversation.objects.filter(
+                participants=p1
+            ).filter(
+                participants=p2
+            ).first()
+            
+            if not conversation:
                 conversation = Conversation.objects.create()
-                conversation.participants.add(current_profile, to_profile)
-                is_match = True
+                conversation.participants.add(p1, p2)
+            
+            conversation_id = str(conversation.id)
+        else:
+            conversation_id = None
         
         response_data = {
             'like': LikeSerializer(like, context={'request': request}).data,
             'is_match': is_match,
-            'created': created
+            'created': created,
+            'match_id': str(match_obj.id) if match_obj else None,
+            'conversation_id': conversation_id
         }
         
         if is_match and match_obj:

@@ -39,9 +39,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            print(f"Failed to decode WebSocket message: {text_data}")
+            return
 
-        if data["type"] == "typing":
+        message_type = data.get("type")
+        
+        if message_type == "typing":
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -49,6 +55,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "user": self.scope["user"].id,
                 }
             )
+        elif message_type == "chat_message":
+            message_content = data.get("message")
+            if message_content:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "chat_message",
+                        "sender_id": str(self.scope["user"].id),
+                        "message": message_content,
+                    }
+                )
+        else:
+            print(f"Unknown message type: {message_type}")
 
     async def typing_indicator(self, event):
         await self.send(text_data=json.dumps({
@@ -65,8 +84,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         """Send message data as JSON to the client"""
-        await self.send(text_data=json.dumps({
+        data = {
             "type": "chat_message",
             "sender_id": event["sender_id"],
-            "html": event["html"]
-        }))
+            "html": event.get("html", "")
+        }
+        
+        if "message" in event:
+            data["message"] = event["message"]
+            
+        await self.send(text_data=json.dumps(data))

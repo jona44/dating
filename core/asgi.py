@@ -6,9 +6,13 @@ import messaging.routing
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 
+from .middleware import WebSocketTokenAuthMiddleware
+
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
-        URLRouter(messaging.routing.websocket_urlpatterns)
+    "websocket": WebSocketTokenAuthMiddleware(
+        AuthMiddlewareStack(
+            URLRouter(messaging.routing.websocket_urlpatterns)
+        )
     ),
 })

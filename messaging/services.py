@@ -55,7 +55,13 @@ def send_message(sender, conversation, body):
         {
             "type": "chat_message",
             "sender_id": str(sender.id),
-            "html": oob_html
+            "html": oob_html,
+            "message": {
+                "id": str(message.id),
+                "sender": str(sender.id),
+                "content": message.body,
+                "timestamp": message.created_at.isoformat()
+            }
         }
     )
 
