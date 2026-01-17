@@ -342,11 +342,12 @@ class ProfileViewSerializer(serializers.ModelSerializer):
 class MessageSerializer(serializers.ModelSerializer):
     """Serializer for messages"""
     sender = ProfileListSerializer(read_only=True)
+    sender_id = serializers.UUIDField(source='sender.id', read_only=True)
     is_read = serializers.SerializerMethodField()
     
     class Meta:
         model = Message
-        fields = ['id', 'conversation', 'sender', 'body', 'is_read', 'created_at']
+        fields = ['id', 'conversation', 'sender', 'sender_id', 'body', 'is_read', 'created_at']
         read_only_fields = ['id', 'sender', 'created_at']
         
     def get_is_read(self, obj):
