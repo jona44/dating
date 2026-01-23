@@ -49,7 +49,6 @@ class Profile(models.Model):
         ('white', 'White / Caucasian'),
         ('black', 'Black'),
         ('Shona','Shona'),
-        ('Zimbabwean','Zimbabwean'),
         ('ndebele','Ndebele'),
         ('Zulu','Zulu'),
         ('Xhosa','Xhosa'),
