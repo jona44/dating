@@ -2,11 +2,13 @@ from rest_framework import viewsets, status, permissions, filters
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Prefetch
 from django.shortcuts import get_object_or_404
 from datetime import date, datetime, timedelta
+import requests
 
 from accounts.models import User, Profile, ProfilePhoto
 from discovery.models import Preference
@@ -68,6 +70,77 @@ def current_user(request):
     """Get current authenticated user"""
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
+
+
+class SocialLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        provider = request.data.get('provider')
+        token = request.data.get('access_token')
+        
+        if not provider or not token:
+            return Response({'error': 'Provider and token required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        email = None
+        social_id = None
+        first_name = ''
+        last_name = ''
+        
+        try:
+            if provider == 'google':
+                # Verify with Google
+                resp = requests.get(f'https://www.googleapis.com/oauth2/v3/userinfo?access_token={token}')
+                if resp.status_code != 200:
+                    return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
+                data = resp.json()
+                email = data.get('email')
+                first_name = data.get('given_name', '')
+                last_name = data.get('family_name', '')
+                
+            elif provider == 'facebook':
+                # Verify with Facebook
+                resp = requests.get(f'https://graph.facebook.com/me?fields=id,email,first_name,last_name&access_token={token}')
+                if resp.status_code != 200:
+                    return Response({'error': 'Invalid Facebook token'}, status=status.HTTP_400_BAD_REQUEST)
+                data = resp.json()
+                email = data.get('email')
+                first_name = data.get('first_name', '')
+                last_name = data.get('last_name', '')
+                
+            else:
+                return Response({'error': 'Invalid provider'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            if not email:
+                return Response({'error': 'Email not found in social account'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            # Get or create user
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                user = User.objects.create_user(
+                    username=email, 
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name
+                )
+                user.set_unusable_password()
+                user.save()
+                
+                # Create profile if not exists
+                Profile.objects.get_or_create(user=user, defaults={'display_name': first_name or email.split('@')[0]})
+
+            # Generate tokens
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': UserSerializer(user).data
+            })
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ==================== PROFILE VIEWS ====================

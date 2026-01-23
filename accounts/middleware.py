@@ -1,6 +1,20 @@
 from django.shortcuts import redirect
 from django.urls import reverse
 
+class LastSeenMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            profile = getattr(request.user, "profile", None)
+            if profile:
+                from django.utils import timezone
+                from .services import update_last_seen
+                update_last_seen(profile)
+        
+        return self.get_response(request)
+
 class ProfileCompletionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response

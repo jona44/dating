@@ -151,19 +151,29 @@ class Profile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_seen = models.DateTimeField(default=timezone.now)
 
+    @property
+    def is_online(self):
+        from .presence import is_online
+        return is_online(self.id)
+
     def __str__(self):
         return self.display_name or self.user.email
     
+    def save(self, *args, **kwargs):
+        # Update completeness percentage before saving
+        self.profile_completeness = self.calculate_completeness()
+        super().save(*args, **kwargs)
+
     def calculate_completeness(self):
         """Calculate profile completion percentage"""
         core_fields = [
             self.display_name, self.bio, self.birth_date, self.gender, 
-            self.city, self.nationality, self.profile_picture
+            self.city, self.nationality, self.profile_picture, self.location
         ]
         lifestyle_fields = [
             self.education_level, self.employment_status, 
             self.children_status, self.hobbies, self.height, 
-            self.smoking, self.drinking
+            self.smoking, self.drinking, self.ethnicity
         ]
         
         all_fields = core_fields + lifestyle_fields

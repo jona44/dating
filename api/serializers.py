@@ -129,7 +129,8 @@ class ProfileListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'display_name', 'bio', 'age', 'gender',
             'profile_picture_url', 'city', 'nationality',
-            'height', 'ethnicity', 'is_verified'
+            'height', 'ethnicity', 'is_verified', 'last_seen', 'is_online',
+            'smoking', 'drinking'
         ]
         
     def get_profile_picture_url(self, obj):
@@ -157,6 +158,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
     age = serializers.SerializerMethodField()
     photos = ProfilePhotoSerializer(many=True, read_only=True)
     all_photo_urls = serializers.SerializerMethodField()
+    matches_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Profile
@@ -170,12 +172,17 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
             'diagnosis_year', 'treatment_status', 'support_seeking',
             'disclosure_comfort', 'is_visible', 'is_verified',
             'is_complete', 'onboarding_step', 'profile_completeness',
-            'photos', 'all_photo_urls', 'created_at', 'last_seen'
+            'photos', 'all_photo_urls', 'created_at', 'last_seen',
+            'matches_count'
         ]
         read_only_fields = [
             'id', 'user', 'is_verified', 'is_complete',
-            'profile_completeness', 'created_at', 'last_seen'
+            'profile_completeness', 'created_at', 'last_seen',
+            'matches_count'
         ]
+        
+    def get_matches_count(self, obj):
+        return obj.matches_as_profile1.count() + obj.matches_as_profile2.count()
         
     def get_profile_picture_url(self, obj):
         if obj.profile_picture:

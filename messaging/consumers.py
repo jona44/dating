@@ -77,6 +77,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                                 "sender_id": str(db_message['sender_profile_id']),
                                 "message": message_content,
                                 "timestamp": db_message['timestamp'],
+                                "html": db_message['html'],
                             }
                         )
                 except Exception as e:
@@ -87,6 +88,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def save_message(self, content):
         from .models import Conversation, Message
+        from django.template.loader import render_to_string
         try:
             user = self.scope["user"]
             profile = user.profile
@@ -97,10 +99,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 sender=profile,
                 body=content
             )
+
+            # Render HTML for Web clients
+            html = render_to_string('web/messaging/partials/message.html', {
+                'message': db_message,
+                'profile': None
+            })
+            oob_html = f'<div id="messages" hx-swap-oob="beforeend">{html}</div>'
+
             return {
                 'id': db_message.id,
                 'sender_profile_id': profile.id,
-                'timestamp': db_message.created_at.isoformat()
+                'timestamp': db_message.created_at.isoformat(),
+                'html': oob_html
             }
         except Exception as e:
             print(f"Error saving message to DB: {str(e)}")
@@ -124,8 +135,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         data = {
             "type": "chat_message",
             "id": event.get("id"),
-            "sender_id": event["sender_id"],
+            "sender_id": event.get("sender_id"),
             "message": event.get("message", ""),
             "timestamp": event.get("timestamp"),
+            "html": event.get("html"),
         }
         await self.send(text_data=json.dumps(data))
