@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
@@ -7,6 +8,7 @@ from accounts.models import Profile
 from discovery.selectors import get_discovery_profiles, search_profiles
 from discovery.models import Preference
 from discovery.forms import PreferenceForm
+from accounts.constants import GEOGRAPHIC_DATA
 from interactions.services import handle_like
 from messaging.selectors import get_conversations_for_profile, get_conversation
 from messaging.services import send_message
@@ -22,10 +24,13 @@ from interactions.models import Match
 def discovery_feed(request):
     profile = get_profile_for_user(request.user)
     profiles = get_discovery_profiles(profile)
+    
+    context = {'profiles': profiles}
+    
+    if request.headers.get('HX-Request') and request.headers.get('HX-Target') == 'discovery-feed':
+        return render(request, 'web/discovery/partials/feed_grid.html', context)
 
-    return render(request, 'web/discovery/feed.html', {
-        'profiles': profiles
-    })
+    return render(request, 'web/discovery/feed.html', context)
 
 
 @login_required
@@ -88,7 +93,6 @@ def profile_view(request, profile_id):
     # Return modal template for HTMX requests
     if request.headers.get('HX-Request'):
         response = render(request, 'web/discovery/profile_detail_modal.html', context)
-        import json
         response['HX-Trigger-After-Settle'] = json.dumps({'modal-open': {}})
         return response
     
@@ -275,7 +279,6 @@ def preferences_view(request):
             if is_htmx:
                 # Return empty response with HX-Trigger to close slideover and show toast
                 from django.http import HttpResponse
-                import json
                 
                 response = HttpResponse(status=200)
                 response['HX-Trigger'] = json.dumps({
@@ -284,7 +287,8 @@ def preferences_view(request):
                         "title": "Preferences saved!",
                         "message": "Your match criteria has been updated."
                     },
-                    "slideover-close": {}
+                    "slideover-close": {},
+                    "discovery-refresh": {}
                 })
                 return response
             
@@ -292,14 +296,24 @@ def preferences_view(request):
     else:
         form = PreferenceForm(instance=preferences)
     
+    # Clean geographic data for JSON
+    clean_geo_data = {k.strip(): v for k, v in GEOGRAPHIC_DATA.items()}
+    print(f"DEBUG: geographic_data keys: {list(clean_geo_data.keys())}")
+    
     # Return slide-over template for HTMX requests
     if is_htmx:
-        response = render(request, 'web/discovery/preferences_panel.html', {'form': form})
-        import json
+        context = {
+            'form': form,
+            'geographic_data': json.dumps(clean_geo_data)
+        }
+        response = render(request, 'web/discovery/preferences_panel.html', context)
         response['HX-Trigger-After-Settle'] = json.dumps({'slideover-open': {}})
         return response
     
-    return render(request, 'web/discovery/preferences.html', {'form': form})
+    return render(request, 'web/discovery/preferences.html', {
+        'form': form,
+        'geographic_data': json.dumps(clean_geo_data)
+    })
 
 
 @login_required

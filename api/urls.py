@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
     register_user, logout_user, current_user, SocialLoginView,
+    get_geographic_metadata,
     ProfileViewSet, ProfilePhotoViewSet, PreferenceViewSet,
     LikeViewSet, MatchViewSet, BlockViewSet, ReportViewSet, SkipViewSet,
     ConversationViewSet, MessageViewSet
@@ -32,6 +33,9 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/logout/', logout_user, name='api_logout'),
     path('auth/me/', current_user, name='current-user'),
+    
+    # Metadata
+    path('meta/geographic/', get_geographic_metadata, name='geographic-metadata'),
     
     # ViewSet routes
     path('', include(router.urls)),

@@ -6,10 +6,10 @@ django.setup()
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
-print("Resetting all user passwords to 'Password123!'...")
+print("Resetting all user passwords to 'munyaradzi'...")
 count = 0
 for user in User.objects.all():
-    user.set_password('Password123!')
+    user.set_password('munyaradzi')
     user.save()
     count += 1
 print(f"Successfully reset {count} users.")

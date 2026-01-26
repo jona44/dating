@@ -20,19 +20,30 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-    {% for profile in profiles %}
-      {% include "web/discovery/partials/profile_card.html" %}
-    {% empty %}
-        <div class="col-span-full py-20 text-center animate-fade-in">
-            <div class="text-8xl mb-6">✨</div>
-            <h3 class="text-2xl font-bold text-gray-800">You've seen everyone!</h3>
-            <p class="text-gray-500 mt-2 max-w-md mx-auto">
-                Try adjusting your <a href="{% url 'preferences' %}" class="text-pink-600 font-bold hover:underline">match criteria</a> or check back later for new members.
-            </p>
+    <div id="feed-container" 
+         hx-get="{% url 'discovery_feed' %}" 
+         hx-trigger="discovery-refresh from:body"
+         hx-target="#discovery-feed"
+         hx-swap="outerHTML">
+        
+        <div id="discovery-feed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {% for profile in profiles %}
+                {% include "web/discovery/partials/profile_card.html" %}
+            {% empty %}
+                <div class="col-span-full py-20 text-center animate-fade-in">
+                    <div class="text-8xl mb-6">✨</div>
+                    <h3 class="text-2xl font-bold text-gray-800">You've seen everyone!</h3>
+                    <p class="text-gray-500 mt-2 max-w-md mx-auto">
+                        Try adjusting your <a href="javascript:void(0)" class="text-pink-600 font-bold hover:underline"
+                                            hx-get="{% url 'preferences' %}"
+                                            hx-target="#slideover-body"
+                                            hx-swap="innerHTML"
+                                            @click="slideoverOpen = true">match criteria</a> or check back later for new members.
+                    </p>
+                </div>
+            {% endfor %}
         </div>
-    {% endfor %}
-  </div>
+    </div>
 </div>
 </div>
 {% endblock %}

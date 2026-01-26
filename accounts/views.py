@@ -1,9 +1,11 @@
+import json
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render, get_object_or_404, HttpResponse
 from .forms import (
     ProfileForm, SignupForm, OnboardingStep1Form, 
     OnboardingStep2Form, OnboardingStep3Form, OnboardingStep4Form
 )
+from .constants import GEOGRAPHIC_DATA
 from discovery.forms import PreferenceForm
 from discovery.models import Preference
 from .models import Profile, ProfilePhoto
@@ -73,11 +75,15 @@ def onboarding_step_view(request, step):
     else:
         form = FormClass(instance=profile)
     
+    # Clean geographic data for JSON (ensure keys matches dropdown values)
+    clean_geo_data = {k.strip(): v for k, v in GEOGRAPHIC_DATA.items()}
+    
     return render(request, f'accounts/onboarding/step{step}.html', {
         'form': form,
         'step': step,
         'total_steps': 4,
-        'progress': int((step / 4) * 100)
+        'progress': int((step / 4) * 100),
+        'geographic_data': json.dumps(clean_geo_data) if step in [1, 2] else "{}"
     })
 
 
@@ -106,15 +112,19 @@ def edit_profile(request):
                 ProfilePhoto.objects.create(profile=profile, image=f)
             
             messages.success(request, "Profile and preferences updated successfully!")
-            return redirect("discovery_feed")
+            return redirect("edit_profile")
     else:
         form = ProfileForm(instance=profile)
         pref_form = PreferenceForm(instance=preferences)
 
+    # Clean geographic data for JSON
+    clean_geo_data = {k.strip(): v for k, v in GEOGRAPHIC_DATA.items()}
+
     return render(request, "accounts/edit_profile.html", {
         "form": form,
         "pref_form": pref_form,
-        "profile": profile
+        "profile": profile,
+        "geographic_data": json.dumps(clean_geo_data)
     })
 
 
@@ -154,7 +164,7 @@ def signup_view(request):
         form = SignupForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect("welcome")
     else:
         form = SignupForm()

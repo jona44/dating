@@ -25,6 +25,28 @@ from .serializers import (
     MessageSerializer, MessageCreateSerializer
 )
 
+from accounts.constants import GEOGRAPHIC_DATA, COUNTRY_CHOICES, ETHNICITY_CHOICES
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_geographic_metadata(request):
+    """
+    Returns structured data for countries, cities, and ethnicities
+    to drive dynamic UI logic.
+    """
+    return Response({
+        'countries': [c[0] for c in COUNTRY_CHOICES if c[0]],
+        'geographic_data': GEOGRAPHIC_DATA,
+        'base_ethnicities': [
+            {'value': 'white', 'label': 'White / Caucasian'},
+            {'value': 'black', 'label': 'Black'},
+            {'value': 'colored', 'label': 'Colored'},
+            {'value': 'indian', 'label': 'Indian'},
+            {'value': 'asian', 'label': 'Asian'},
+        ]
+    })
+
 
 # ==================== AUTHENTICATION VIEWS ====================
 
@@ -33,21 +55,22 @@ from .serializers import (
 def register_user(request):
     """Register a new user"""
     serializer = UserRegistrationSerializer(data=request.data)
-    if serializer.is_valid():
-        user = serializer.save()
-        
-        # Create refresh and access tokens
-        refresh = RefreshToken.for_user(user)
-        
-        return Response({
-            'user': UserSerializer(user).data,
-            'tokens': {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }
-        }, status=status.HTTP_201_CREATED)
+    if not serializer.is_valid():
+        print(f"Registration validation failed: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    user = serializer.save()
+    
+    # Create refresh and access tokens
+    refresh = RefreshToken.for_user(user)
+    
+    return Response({
+        'user': UserSerializer(user).data,
+        'tokens': {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+    }, status=status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])

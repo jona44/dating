@@ -1,5 +1,8 @@
 from django.db import models
-from accounts.constants import COUNTRY_CHOICES, CITY_CHOICES
+from accounts.constants import COUNTRY_CHOICES, CITY_CHOICES, ETHNICITY_CHOICES as BASE_ETHNICITY_CHOICES
+
+# Filter out the empty choice from base and add 'any'
+ETHNICITY_CHOICES = [('any', 'Any')] + [c for c in BASE_ETHNICITY_CHOICES if c[0]]
 
 
 class Preference(models.Model):
@@ -25,26 +28,7 @@ class Preference(models.Model):
     pref_max_children = models.IntegerField(null=True, blank=True, help_text="Maximum number of children a partner has")
     pref_nationality = models.CharField(max_length=100, choices=COUNTRY_CHOICES, blank=True, help_text="Preferred nationality")
     
-    ETHNICITY_CHOICES = [
-        ('any', 'Any'),
-        ('white', 'White / Caucasian'),
-        ('black', 'Black'),
-        ('Shona','Shona'),
-        ('Zimbabwean','Zimbabwean'),
-        ('ndebele','Ndebele'),
-        ('Zulu','Zulu'),
-        ('Xhosa','Xhosa'),
-        ('Tswana','Tswana'),
-        ('pedi','Pedi'),
-        ('tsonga','Tsonga'),
-        ('swazi','Swazi'),
-        ('venda','Venda'),
-        ('colored','Colored'),
-        ('indian','Indian'),
-        
-        
-    ]
-    pref_ethnicity = models.CharField(max_length=30, choices=ETHNICITY_CHOICES, default='any')
+    pref_ethnicity = models.CharField(max_length=100, choices=ETHNICITY_CHOICES, default='any')
     
     # Visibility
     show_me = models.BooleanField(default=True, help_text="Show my profile in discovery")

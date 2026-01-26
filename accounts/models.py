@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
 from .managers import UserManager
-from .constants import COUNTRY_CHOICES, CITY_CHOICES
+from .constants import COUNTRY_CHOICES, CITY_CHOICES, ETHNICITY_CHOICES
 import uuid
 
 
@@ -41,26 +41,11 @@ class Profile(models.Model):
     
     # Location
     location = models.CharField(max_length=255, blank=True, help_text="General area")
+    residence_country = models.CharField(max_length=100, choices=COUNTRY_CHOICES, blank=True)
     city = models.CharField(max_length=100, choices=CITY_CHOICES, blank=True)
     nationality = models.CharField(max_length=100, choices=COUNTRY_CHOICES, blank=True)
     
-    ETHNICITY_CHOICES = [
-        ('any', 'Any'),
-        ('white', 'White / Caucasian'),
-        ('black', 'Black'),
-        ('Shona','Shona'),
-        ('ndebele','Ndebele'),
-        ('Zulu','Zulu'),
-        ('Xhosa','Xhosa'),
-        ('Tswana','Tswana'),
-        ('pedi','Pedi'),
-        ('tsonga','Tsonga'),
-        ('swazi','Swazi'),
-        ('venda','Venda'),
-        ('colored','Colored'),
-        ('indian','Indian'),
-    ]
-    ethnicity = models.CharField(max_length=30, choices=ETHNICITY_CHOICES, blank=True)
+    ethnicity = models.CharField(max_length=50, choices=ETHNICITY_CHOICES, blank=True)
     
     # Personal Details
     EMPLOYMENT_CHOICES = [
@@ -94,7 +79,19 @@ class Profile(models.Model):
     children_count = models.IntegerField(null=True, blank=True, default=0)
     
     # Interests & Lifestyle
-    hobbies = models.TextField(blank=True, help_text="Comma-separated hobbies and interests")
+    HOBBY_CHOICES = [
+        ('sports', 'Sports & Fitness'),
+        ('travel', 'Travel & Adventure'),
+        ('music', 'Music & Arts'),
+        ('reading', 'Reading & Writing'),
+        ('gaming', 'Gaming & Technology'),
+        ('movies', 'Movies & TV'),
+        ('cooking', 'Cooking & Food'),
+        ('nature', 'Nature & Outdoors'),
+        ('photography', 'Photography'),
+        ('fashion', 'Fashion'),
+    ]
+    hobbies = models.CharField(max_length=255, blank=True)
     height = models.IntegerField(null=True, blank=True, help_text="Height in cm")
     
     SMOKING_CHOICES = [

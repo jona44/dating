@@ -1,91 +1,197 @@
 <!-- Preferences Slide-over Panel Content -->
 <script>
-  // Set slide-over title whenever this panel loads
-  document.getElementById('slideover-title').textContent = 'Match Preferences';
+  function preferenceManager() {
+    // Safely parse the JSON string passed from Django
+    const geoData = JSON.parse('{{ geographic_data|escapejs }}');
+    
+    return {
+        selectedCountry: '{{ form.pref_nationality.value|default:"" }}',
+        selectedCity: '{{ form.pref_city.value|default:"" }}',
+        selectedEthnicity: '{{ form.pref_ethnicity.value|default:"any" }}',
+        selectedDemonym: '',
+        availableCities: [],
+        availableEthnicities: [],
+        
+        init() {
+            // Set title safely
+            const titleEl = document.getElementById('slideover-title');
+            if (titleEl) titleEl.textContent = 'Discovery Settings';
+            
+            console.log("Preferences: init", this.selectedCountry);
+            this.syncData();
+        },
+        
+        onCountryChange() {
+            this.selectedCity = '';
+            this.selectedEthnicity = 'any';
+            this.syncData();
+        },
+
+        syncData() {
+            if (!this.selectedCountry) {
+                this.availableCities = [];
+                this.availableEthnicities = [];
+                this.selectedDemonym = "";
+                return;
+            }
+
+            const countryKey = this.selectedCountry.trim();
+            let data = geoData[countryKey];
+            
+            if (!data) {
+                const searchTerm = countryKey.toLowerCase();
+                const actualKey = Object.keys(geoData).find(k => k.trim().toLowerCase() === searchTerm);
+                data = actualKey ? geoData[actualKey] : null;
+            }
+
+            if (data) {
+                this.selectedDemonym = data.demonym || "";
+                this.availableCities = data.cities || [];
+                this.availableEthnicities = data.ethnicities || [];
+            } else {
+                this.selectedDemonym = "";
+                this.availableCities = [];
+                this.availableEthnicities = [];
+            }
+        }
+    }
+  }
 </script>
 
-<form hx-post="{% url 'preferences' %}"
+<div x-data="preferenceManager()" class="pb-8">
+  <form hx-post="{% url 'preferences' %}"
         hx-target="#slideover-body"
         hx-swap="innerHTML"
-        class="space-y-6">
+        class="space-y-8">
     {% csrf_token %}
     
-    <!-- Age Range -->
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          {{ form.min_age.label }}
-        </label>
-        {{ form.min_age }}
-        {% if form.min_age.errors %}
-          <p class="text-red-500 text-sm mt-1">{{ form.min_age.errors.0 }}</p>
-        {% endif %}
-      </div>
-      
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          {{ form.max_age.label }}
-        </label>
-        {{ form.max_age }}
-        {% if form.max_age.errors %}
-          <p class="text-red-500 text-sm mt-1">{{ form.max_age.errors.0 }}</p>
-        {% endif %}
-      </div>
-    </div>
+    <!-- Match Criteria Section -->
+    <div class="space-y-6">
+      <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        Match Criteria
+      </h3>
 
-    <!-- Gender Preference -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        {{ form.interested_in.label }}
-      </label>
-      {{ form.interested_in }}
-      {% if form.interested_in.errors %}
-        <p class="text-red-500 text-sm mt-1">{{ form.interested_in.errors.0 }}</p>
-      {% endif %}
-    </div>
-
-    <!-- Location & Origin -->
-    <div class="grid grid-cols-1 gap-4">
+      <!-- Interested In -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          {{ form.pref_city.label }}
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          {{ form.interested_in.label }}
         </label>
-        {{ form.pref_city }}
-        {% if form.pref_city.errors %}
-          <p class="text-red-500 text-sm mt-1">{{ form.pref_city.errors.0 }}</p>
+        {{ form.interested_in }}
+        {% if form.interested_in.errors %}
+          <p class="text-red-500 text-xs mt-1">{{ form.interested_in.errors.0 }}</p>
         {% endif %}
       </div>
-      
+
+      <!-- Age Range -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          {{ form.pref_nationality.label }}
-        </label>
-        {{ form.pref_nationality }}
-        {% if form.pref_nationality.errors %}
-          <p class="text-red-500 text-sm mt-1">{{ form.pref_nationality.errors.0 }}</p>
+        <label class="block text-sm font-semibold text-gray-700 mb-3">Age Range</label>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="relative">
+            <span class="absolute left-4 top-3 text-gray-400 text-xs">Min</span>
+            {{ form.min_age }}
+          </div>
+          <div class="relative">
+            <span class="absolute left-4 top-3 text-gray-400 text-xs">Max</span>
+            {{ form.max_age }}
+          </div>
+        </div>
+        {% if form.min_age.errors or form.max_age.errors %}
+          <p class="text-red-500 text-xs mt-2">{{ form.min_age.errors.0 }}{{ form.max_age.errors.0 }}</p>
         {% endif %}
       </div>
     </div>
 
-    <!-- Visibility Toggle -->
-    <div class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-      {{ form.show_me }}
-      <label class="text-sm font-medium text-gray-700">
-        {{ form.show_me.label }}
-      </label>
+    <!-- Location & Heritage Section -->
+    <div class="space-y-6 pt-6 border-t border-gray-100">
+      <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        Preferred Location
+      </h3>
+
+      <div class="space-y-4">
+        <div>
+          <label for="id_pref_nationality" class="block text-sm font-semibold text-gray-700 mb-2">
+            Preferred Country
+          </label>
+          <select name="pref_nationality" id="id_pref_nationality" 
+                  x-model="selectedCountry" 
+                  @change="onCountryChange()"
+                  class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500 transition-shadow">
+            {% for val, label in form.fields.pref_nationality.choices %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="id_pref_city" class="block text-sm font-semibold text-gray-700 mb-2">
+            <span x-text="selectedDemonym ? selectedDemonym + ' City' : 'Preferred City'"></span>
+          </label>
+          <select name="pref_city" id="id_pref_city" 
+                  x-model="selectedCity"
+                  class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500 transition-shadow">
+            <option value="">Any City</option>
+            <template x-for="city in availableCities" :key="city">
+              <option :value="city" x-text="city"></option>
+            </template>
+          </select>
+        </div>
+
+        <div>
+          <label for="id_pref_ethnicity" class="block text-sm font-semibold text-gray-700 mb-2">
+            <span x-text="selectedDemonym ? selectedDemonym + ' Ethnicity' : 'Preferred Ethnicity'"></span>
+          </label>
+          <select name="pref_ethnicity" id="id_pref_ethnicity" 
+                  x-model="selectedEthnicity"
+                  class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500 transition-shadow">
+            <option value="any">Any Ethnicity</option>
+            <template x-for="eth in availableEthnicities" :key="eth[0]">
+              <option :value="eth[0]" x-text="eth[1]"></option>
+            </template>
+            <!-- Fallback generic choices -->
+            <optgroup label="General">
+              <option value="white">White / Caucasian</option>
+              <option value="black">Black</option>
+              <option value="colored">Colored</option>
+              <option value="indian">Indian</option>
+              <option value="asian">Asian</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div>
+           <label class="block text-sm font-semibold text-gray-700 mb-2">
+             {{ form.pref_max_children.label }}
+           </label>
+           {{ form.pref_max_children }}
+        </div>
+      </div>
     </div>
 
-    <!-- Submit Button -->
-    <div class="flex gap-3 pt-4 border-t">
+    <!-- Visibility & Options Section -->
+    <div class="space-y-6 pt-6 border-t border-gray-100">
+      <div class="flex items-center justify-between p-4 bg-pink-50/50 rounded-2xl border border-pink-100">
+        <div>
+          <p class="text-sm font-bold text-gray-800">Discovery Visibility</p>
+          <p class="text-xs text-gray-500">Show my profile to others</p>
+        </div>
+        {{ form.show_me }}
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 pt-6 border-t border-gray-100">
       <button type="submit" 
-              class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 transition">
-        Save Preferences
+              class="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 text-white py-4 rounded-2xl font-bold hover:from-pink-700 hover:to-purple-700 shadow-lg transform hover:-translate-y-0.5 active:translate-y-0">
+        Save Changes
       </button>
       <button type="button"
               @click="$dispatch('slideover-close')"
-              class="px-6 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition">
+              class="px-6 bg-gray-100 text-gray-700 py-4 rounded-2xl font-bold hover:bg-gray-200 transition">
         Cancel
       </button>
     </div>
   </form>
+</div>
 

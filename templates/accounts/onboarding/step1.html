@@ -15,34 +15,151 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-xl p-8 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-xl p-8 animate-fade-in" x-data="locationPicker()">
         <h1 class="text-3xl font-bold mb-2">The Basics</h1>
         <p class="text-gray-600 mb-8">Let's start with some basic information to get your profile set up.</p>
 
         <form method="post" class="space-y-6">
             {% csrf_token %}
             
-            {% for field in form %}
-            <div>
-                <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                    {{ field.label }}
-                </label>
-                {{ field }}
-                {% if field.help_text %}
-                <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
-                {% endif %}
-                {% if field.errors %}
-                <p class="mt-1 text-xs text-red-500">{{ field.errors.0 }}</p>
-                {% endif %}
-            </div>
-            {% endfor %}
+            <div class="space-y-6">
+                <!-- Display Name -->
+                <div>
+                    <label for="{{ form.display_name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        {{ form.display_name.label }}
+                    </label>
+                    {{ form.display_name }}
+                    {% if form.display_name.errors %}
+                    <p class="mt-1 text-xs text-red-500">{{ form.display_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
 
-            <div class="pt-4">
-                <button type="submit" class="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold rounded-xl hover:from-pink-700 hover:to-purple-700 transition shadow-lg">
+                <!-- Birth Date & Gender Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.birth_date.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            {{ form.birth_date.label }}
+                        </label>
+                        {{ form.birth_date }}
+                        {% if form.birth_date.errors %}
+                        <p class="mt-1 text-xs text-red-500">{{ form.birth_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.gender.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            {{ form.gender.label }}
+                        </label>
+                        {{ form.gender }}
+                        {% if form.gender.errors %}
+                        <p class="mt-1 text-xs text-red-500">{{ form.gender.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Current Location Section -->
+                <div class="pt-4 border-t border-gray-100">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Current Location
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="id_residence_country" class="block text-sm font-semibold text-gray-700 mb-2">
+                                {{ form.residence_country.label }}
+                            </label>
+                            <select name="residence_country" id="id_residence_country" 
+                                    x-model="selectedCountry" 
+                                    @change="onCountryChange()"
+                                    class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500">
+                                {% for val, label in form.fields.residence_country.choices %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.residence_country.errors %}
+                            <p class="mt-1 text-xs text-red-500">{{ form.residence_country.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="id_city" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <span x-text="selectedDemonym ? selectedDemonym + ' City' : 'City'"></span>
+                            </label>
+                            <select name="city" id="id_city" 
+                                    x-model="selectedCity"
+                                    class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500">
+                                <option value="">Select City</option>
+                                <template x-for="(city, index) in availableCities" :key="index">
+                                    <option :value="city" x-text="city"></option>
+                                </template>
+                            </select>
+                            {% if form.city.errors %}
+                            <p class="mt-1 text-xs text-red-500">{{ form.city.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-8">
+                <button type="submit" class="w-full py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold rounded-xl hover:from-pink-700 hover:to-purple-700 transition shadow-lg transform hover:-translate-y-0.5 active:translate-y-0">
                     Save & Continue →
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+function locationPicker() {
+    // Parse the JSON data passed from the view
+    let geoData = {};
+    try {
+        geoData = JSON.parse('{{ geographic_data|escapejs }}');
+    } catch (e) {
+        console.error("Failed to parse geoData:", e);
+    }
+    
+    return {
+        selectedCountry: '{{ form.residence_country.value|default:"" }}',
+        selectedCity: '{{ form.city.value|default:"" }}',
+        selectedDemonym: '',
+        availableCities: [],
+        
+        init() {
+            if (this.selectedCountry) {
+                this.onCountryChange(true);
+            }
+        },
+        
+        onCountryChange(isInit = false) {
+            if (!this.selectedCountry) {
+                this.availableCities = [];
+                this.selectedDemonym = "";
+                return;
+            }
+
+            // Normalize lookup to find the country key case-insensitively
+            const searchTerm = this.selectedCountry.trim().toLowerCase();
+            const actualKey = Object.keys(geoData).find(k => k.trim().toLowerCase() === searchTerm);
+            
+            let data = actualKey ? geoData[actualKey] : null;
+
+            if (data) {
+                this.selectedDemonym = data.demonym || "";
+                this.availableCities = data.cities || [];
+            } else {
+                this.selectedDemonym = "";
+                this.availableCities = [];
+            }
+            
+            if (!isInit) {
+                this.selectedCity = '';
+            }
+        }
+    }
+}
+</script>
 {% endblock %}

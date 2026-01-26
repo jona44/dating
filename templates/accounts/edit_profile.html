@@ -2,7 +2,7 @@
 
 {% block content %}
 <div id="page-content">
-<div class="max-w-4xl mx-auto py-8 px-4" x-data="{ section: 'basic' }">
+<div class="max-w-4xl mx-auto py-8 px-4" x-data="editProfileData()">
   <div class="bg-white rounded-2xl shadow-lg flex flex-col md:flex-row overflow-hidden">
     
     <!-- Sidebar Tabs -->
@@ -106,9 +106,33 @@
                 <label class="block text-sm font-semibold text-gray-700">{{ form.gender.label }}</label>
                 {{ form.gender }}
             </div>
+            
+            <!-- Country -->
             <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">{{ form.city.label }}</label>
-                {{ form.city }}
+                <label class="block text-sm font-semibold text-gray-700">{{ form.residence_country.label }}</label>
+                <select name="residence_country" 
+                        x-model="selectedCountry" 
+                        @change="onCountryChange()"
+                        class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500">
+                    {% for val, label in form.fields.residence_country.choices %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- City (Dependent) -->
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">
+                    <span x-text="selectedDemonym ? selectedDemonym + ' City' : 'Current City'"></span>
+                </label>
+                <select name="city" 
+                        x-model="selectedCity"
+                        class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500">
+                    <option value="">Select City</option>
+                    <template x-for="(city, index) in availableCities" :key="index">
+                        <option :value="city" x-text="city" :selected="city == selectedCity"></option>
+                    </template>
+                </select>
             </div>
           </div>
 
@@ -147,10 +171,34 @@
                 {{ form.children_count }}
             </div>
           </div>
-          <div class="space-y-2">
-            <label class="block text-sm font-semibold text-gray-700">{{ form.hobbies.label }}</label>
-            {{ form.hobbies }}
-            <p class="text-xs text-gray-500">Separated by commas</p>
+          <div class="space-y-2 pt-4 border-t border-gray-100">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">{{ form.hobbies.label }}</label>
+            <style>
+              .hobby-label-card input[type="checkbox"] {
+                  width: 1.15rem;
+                  height: 1.15rem;
+                  color: #db2777;
+                  border-radius: 0.375rem;
+                  border-color: #d1d5db;
+                  cursor: pointer;
+              }
+              .hobby-label-card:has(input:checked) {
+                  border-color: #db2777;
+                  background-color: #fff1f2;
+              }
+              .hobby-label-card:has(input:checked) span {
+                  color: #be185d;
+                  font-weight: 600;
+              }
+            </style>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {% for choice in form.hobbies %}
+              <label class="hobby-label-card relative flex items-center p-3 border rounded-xl cursor-pointer transition group hover:border-pink-300 hover:bg-pink-50/50">
+                  {{ choice.tag }}
+                  <span class="ml-2 text-sm text-gray-600 group-hover:text-pink-600 transition">{{ choice.choice_label }}</span>
+              </label>
+              {% endfor %}
+            </div>
           </div>
         </div>
 
@@ -228,20 +276,52 @@
                 {{ pref_form.interested_in }}
             </div>
             <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">{{ pref_form.pref_city.label }}</label>
-                {{ pref_form.pref_city }}
-            </div>
-            <div class="space-y-2">
                 <label class="block text-sm font-semibold text-gray-700">{{ pref_form.pref_max_children.label }}</label>
                 {{ pref_form.pref_max_children }}
             </div>
-            <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">{{ pref_form.pref_ethnicity.label }}</label>
-                {{ pref_form.pref_ethnicity }}
-            </div>
+            
+            <!-- Preferred Country -->
             <div class="space-y-2">
                 <label class="block text-sm font-semibold text-gray-700">{{ pref_form.pref_nationality.label }}</label>
-                {{ pref_form.pref_nationality }}
+                <select name="pref_nationality" 
+                        x-model="prefSelectedCountry" 
+                        @change="onPrefCountryChange()"
+                        class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500">
+                    {% for val, label in pref_form.fields.pref_nationality.choices %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Preferred City -->
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">
+                    <span x-text="prefSelectedDemonym ? prefSelectedDemonym + ' City' : 'Preferred City'"></span>
+                </label>
+                <select name="pref_city" 
+                        x-model="prefSelectedCity"
+                        class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500">
+                    <option value="">Any</option>
+                    <template x-for="(city, index) in prefAvailableCities" :key="index">
+                        <option :value="city" x-text="city" :selected="city == prefSelectedCity"></option>
+                    </template>
+                </select>
+            </div>
+
+            <!-- Preferred Ethnicity -->
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">
+                    <span x-text="prefSelectedDemonym ? prefSelectedDemonym + ' Ethnicity' : 'Preferred Ethnicity'"></span>
+                </label>
+                <select name="pref_ethnicity" 
+                        x-model="prefSelectedEthnicity"
+                        class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500">
+                    <option value="any">Any</option>
+                    <template x-for="(eth, index) in prefAvailableEthnicities" :key="index">
+                        <option :value="eth[0]" x-text="eth[1]" :selected="eth[0] == prefSelectedEthnicity"></option>
+                    </template>
+                </select>
+                <p x-show="!prefSelectedCountry" class="text-xs text-gray-500 mt-1">Select country to see specific ethnic groups</p>
             </div>
           </div>
 
@@ -290,5 +370,105 @@
             reader.readAsDataURL(this.files[0]);
         }
     });
+
+    function editProfileData() {
+        // Parse the JSON data passed from the view
+        let geoData = {};
+        try {
+            geoData = JSON.parse('{{ geographic_data|escapejs }}');
+        } catch (e) {
+            console.error("Failed to parse geoData:", e);
+        }
+        
+        return {
+            section: 'basic',
+            selectedCountry: '{{ form.residence_country.value|default:"" }}',
+            selectedCity: '{{ form.city.value|default:"" }}',
+            selectedDemonym: '',
+            availableCities: [],
+            
+            init() {
+                if (this.selectedCountry) {
+                    this.onCountryChange(true);
+                }
+                if (this.prefSelectedCountry) {
+                    this.onPrefCountryChange(true);
+                }
+            },
+            
+            onCountryChange(isInit = false) {
+                if (!this.selectedCountry) {
+                    this.availableCities = [];
+                    this.selectedDemonym = "";
+                    return;
+                }
+    
+                // Normalize lookup to find the country key case-insensitively
+                const searchTerm = this.selectedCountry.trim().toLowerCase();
+                const actualKey = Object.keys(geoData).find(k => k.trim().toLowerCase() === searchTerm);
+                
+                let data = actualKey ? geoData[actualKey] : null;
+    
+                if (data) {
+                    this.selectedDemonym = data.demonym || "";
+                    this.availableCities = data.cities || [];
+                } else {
+                    this.selectedDemonym = "";
+                    this.availableCities = [];
+                }
+                
+                if (!isInit) {
+                    this.selectedCity = '';
+                }
+            },
+
+            // Match Preferences Logic
+            prefSelectedCountry: '{{ pref_form.pref_nationality.value|default:"" }}',
+            prefSelectedCity: '{{ pref_form.pref_city.value|default:"" }}',
+            prefSelectedEthnicity: '{{ pref_form.pref_ethnicity.value|default:"any" }}',
+            prefSelectedDemonym: '',
+            prefAvailableCities: [],
+            prefAvailableEthnicities: [], // Standard base ones + country specific
+
+            onPrefCountryChange(isInit = false) {
+                // Base ethnicities are always available or we can fetch them from backend constants
+                // For now, hardcoding base ones similar to constants.py
+                const baseEthnicities = [
+                    ['white', 'White / Caucasian'],
+                    ['black', 'Black'],
+                    ['colored', 'Colored'],
+                    ['indian', 'Indian'],
+                    ['asian', 'Asian']
+                ];
+
+                if (!this.prefSelectedCountry) {
+                    this.prefAvailableCities = [];
+                    this.prefAvailableEthnicities = baseEthnicities;
+                    this.prefSelectedDemonym = "";
+                    return;
+                }
+    
+                const searchTerm = this.prefSelectedCountry.trim().toLowerCase();
+                const actualKey = Object.keys(geoData).find(k => k.trim().toLowerCase() === searchTerm);
+                let data = actualKey ? geoData[actualKey] : null;
+    
+                if (data) {
+                    this.prefSelectedDemonym = data.demonym || "";
+                    this.prefAvailableCities = data.cities || [];
+                    // Combine base + specific
+                    this.prefAvailableEthnicities = data.ethnicities ? data.ethnicities : baseEthnicities;
+                } else {
+                    this.prefSelectedDemonym = "";
+                    this.prefAvailableCities = [];
+                    this.prefAvailableEthnicities = baseEthnicities;
+                }
+                
+                if (!isInit) {
+                    this.prefSelectedCity = '';
+                    this.prefSelectedEthnicity = 'any';
+                }
+            }
+        }
+    }
 </script>
 {% endblock %}
