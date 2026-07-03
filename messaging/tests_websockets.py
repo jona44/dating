@@ -10,13 +10,14 @@ from messaging.models import Conversation
 class WebSocketConnectionTest(TransactionTestCase):
     def test_websocket_connectivity(self):
         """Testing websocket connectivity using sync-wrapper for async."""
-        async def run_test():
-            user = await get_user_model().objects.create_user(email='ws_test@example.com', password='password123')
-            profile = await Profile.objects.aget(user=user)
-            conv = await Conversation.objects.acreate()
-            await conv.participants.aadd(profile)
+        user = get_user_model().objects.create_user(email='ws_test@example.com', password='password123')
+        profile = Profile.objects.get(user=user)
+        conv = Conversation.objects.create()
+        conv.participants.add(profile)
 
-            communicator = WebsocketCommunicator(application, f"/ws/chat/{conv.id}/")
+        async def run_test(user_id, conv_id):
+            user = await get_user_model().objects.aget(id=user_id)
+            communicator = WebsocketCommunicator(application, f"/ws/chat/{conv_id}/")
             communicator.scope['user'] = user
             
             connected, subprotocol = await communicator.connect()
@@ -35,7 +36,5 @@ class WebSocketConnectionTest(TransactionTestCase):
             await communicator.disconnect()
             return "Success"
 
-        # Explicitly setting a new event loop for this thread if needed, 
-        # but TransactionTestCase is usually sync.
-        result = asyncio.run(run_test())
+        result = asyncio.run(run_test(user.id, conv.id))
         self.assertEqual(result, "Success")
