@@ -9,6 +9,11 @@ import os
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_profile(sender, instance, created, **kwargs):
     if created:
+        # NOTE: This signal has no access to the HTTP request, so we cannot read
+        # request.app_variant here.  The variant is intentionally left as the
+        # env-level default; it will be overwritten by register_user / SocialLoginView
+        # (and the user_signed_up / social_account_added signals below) which DO have
+        # access to the request and carry the correct X-App-Variant value.
         variant = os.getenv('APP_VARIANT', 'hiv_plus')
         Profile.objects.get_or_create(user=instance, defaults={'app_variant': variant})
 

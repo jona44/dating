@@ -78,9 +78,15 @@ class VariantMiddleware:
             prefix_stripped = True
 
         if header_variant in ('hiv_plus', 'general', 'diversehearts', 'hivplus', 'hiv-plus', 'diverse-hearts'):
+            # Header always wins — update session so web views stay consistent too
             request.app_variant = self._normalize_variant(header_variant)
+            if hasattr(request, 'session'):
+                request.session['app_variant'] = request.app_variant
         elif prefix_stripped:
             request.app_variant = prefix_variant
+            # Update session so sub-requests within the same session stay on this variant
+            if hasattr(request, 'session'):
+                request.session['app_variant'] = request.app_variant
 
             # Rewrite path_info and path to strip the variant prefix
             # Example: /hiv-plus/accounts/login/ -> /accounts/login/
@@ -89,26 +95,27 @@ class VariantMiddleware:
             request.path_info = new_path
             request.path = new_path
         else:
-            # Check session
-            session_variant = request.session.get('app_variant') if hasattr(request, 'session') else None
-            if session_variant:
-                request.app_variant = session_variant
+            # No explicit signal: check domain mapping first, then session, then env fallback.
+            # Domain mapping is preferred over a stale session on a single-domain deployment.
+            domain_variant = self._variant_for_host(host)
+            if domain_variant:
+                request.app_variant = domain_variant
+            elif any(marker in host for marker in ('diversehearts', 'general', 'diverse-hearts')):
+                request.app_variant = 'general'
+            elif any(marker in host for marker in ('hivplus', 'hiv-plus')):
+                request.app_variant = 'hiv_plus'
             else:
-                # Determine variant based on domain mapping or fallback
-                domain_variant = self._variant_for_host(host)
-                if domain_variant:
-                    request.app_variant = domain_variant
-                else:
-                    if any(marker in host for marker in ('diversehearts', 'general', 'diverse-hearts')):
-                        request.app_variant = 'general'
-                    elif any(marker in host for marker in ('hivplus', 'hiv-plus')):
-                        request.app_variant = 'hiv_plus'
-                    else:
-                        request.app_variant = self._normalize_variant(os.getenv('APP_VARIANT', 'hiv_plus')) or 'hiv_plus'
+                # Fall back to session (useful for web users who navigated via prefix before)
+                session_variant = request.session.get('app_variant') if hasattr(request, 'session') else None
+                request.app_variant = (
+                    session_variant
+                    or self._normalize_variant(os.getenv('APP_VARIANT', 'hiv_plus'))
+                    or 'hiv_plus'
+                )
 
-        # Persist determined variant in session if available
-        if hasattr(request, 'session') and getattr(request, 'app_variant', None):
-            request.session['app_variant'] = request.app_variant
+            # Persist to session only when no stronger signal exists
+            if hasattr(request, 'session') and getattr(request, 'app_variant', None):
+                request.session['app_variant'] = request.app_variant
 
         # Redirect legacy root URLs to the explicit variant prefix when appropriate.
         # Only do this if we did not just strip the prefix to avoid redirect loops.
